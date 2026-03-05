@@ -1,0 +1,48 @@
+FROM sharelatex/sharelatex:6.1.2
+
+# Upgrade TeX Live from 2025 to 2026 in-place, then install only required extras.
+RUN set -eux; \
+  TLROOT=/usr/local/texlive; \
+  TLSRC="${TLROOT}/2025"; \
+  TLDST="${TLROOT}/2026"; \
+  TLNET_URL="https://mirror.ctan.org/systems/texlive/tlnet"; \
+  TEXLIVE_SIGNING_SUBKEY_FPR="D8F2F86057A857E42A88106A4CE1877E19438C70"; \
+  if [ ! -d "${TLSRC}" ]; then \
+    echo "Expected TeX Live source install at ${TLSRC}, but it was not found."; \
+    exit 1; \
+  fi; \
+  if [ ! -d "${TLDST}" ]; then \
+    cp -a "${TLSRC}" "${TLDST}"; \
+  fi; \
+  if [ -d "${TLDST}/tlpkg/backups" ]; then \
+    rm -rf "${TLDST}/tlpkg/backups/"*; \
+  fi; \
+  TLBIN="$(find "${TLDST}/bin" -mindepth 1 -maxdepth 1 -type d | head -n 1)"; \
+  export PATH="${TLBIN}:${PATH}"; \
+  cd "${TLDST}"; \
+  curl -fsSLo update-tlmgr-latest.sh.sha512 "${TLNET_URL}/update-tlmgr-latest.sh.sha512"; \
+  curl -fsSLo update-tlmgr-latest.sh.sha512.asc "${TLNET_URL}/update-tlmgr-latest.sh.sha512.asc"; \
+  curl -fsSLo texlive.asc https://www.tug.org/texlive/files/texlive.asc; \
+  GNUPGHOME="$(mktemp -d)"; \
+  chmod 700 "${GNUPGHOME}"; \
+  export GNUPGHOME; \
+  gpg --batch --import texlive.asc; \
+  gpg --batch --status-file /tmp/texlive-gpg-status.log --verify update-tlmgr-latest.sh.sha512.asc update-tlmgr-latest.sh.sha512; \
+  grep -q "VALIDSIG ${TEXLIVE_SIGNING_SUBKEY_FPR}" /tmp/texlive-gpg-status.log; \
+  TLMGR_SCRIPT="$(awk '{print $2}' update-tlmgr-latest.sh.sha512)"; \
+  case "${TLMGR_SCRIPT}" in \
+    update-tlmgr-r*.sh) ;; \
+    *) echo "Unexpected update script name: ${TLMGR_SCRIPT}"; exit 1 ;; \
+  esac; \
+  curl -fsSLo "${TLMGR_SCRIPT}" "${TLNET_URL}/${TLMGR_SCRIPT}"; \
+  sha512sum -c update-tlmgr-latest.sh.sha512; \
+  sh "${TLMGR_SCRIPT}" -- --upgrade; \
+  tlmgr update --self --all; \
+  if command -v luaotfload-tool >/dev/null 2>&1; then \
+    luaotfload-tool -fu; \
+  fi; \
+  tlmgr install collection-latexextra algorithm2e; \
+  tlmgr path add; \
+  rm -rf "${TLSRC}" "${TLDST}/tlpkg/backups"; \
+  rm -f update-tlmgr-latest.sh.sha512 update-tlmgr-latest.sh.sha512.asc texlive.asc "${TLMGR_SCRIPT}" /tmp/texlive-gpg-status.log; \
+  rm -rf "${GNUPGHOME}"
