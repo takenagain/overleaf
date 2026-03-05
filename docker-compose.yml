@@ -1,9 +1,7 @@
 services:
   sharelatex:
     restart: always
-    build:
-      context: .
-      dockerfile: Dockerfile.sharelatex
+    image: ghcr.io/takenagain/overleaf:staging
     container_name: sharelatex
     depends_on:
       mongo:
