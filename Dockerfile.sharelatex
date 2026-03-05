@@ -1,4 +1,4 @@
-FROM sharelatex/sharelatex:latest
+FROM sharelatex/sharelatex:6.1.2
 
 # Upgrade TeX Live from 2025 to 2026 in-place, then install only required extras.
 RUN set -eux; \
@@ -20,11 +20,11 @@ RUN set -eux; \
   cd "${TLDST}"; \
   wget -q https://mirror.ctan.org/systems/texlive/tlnet/update-tlmgr-latest.sh; \
   sh update-tlmgr-latest.sh -- --upgrade; \
-  tlmgr option repository ctan; \
   tlmgr update --self --all; \
   if command -v luaotfload-tool >/dev/null 2>&1; then \
     luaotfload-tool -fu; \
   fi; \
   tlmgr install collection-latexextra algorithm2e; \
   tlmgr path add; \
+  rm -rf "${TLSRC}" "${TLDST}/tlpkg/backups"; \
   rm -f update-tlmgr-latest.sh

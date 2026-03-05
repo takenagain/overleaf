@@ -13,7 +13,8 @@ services:
     #  - 80:80
     stop_grace_period: 60s
     volumes:
-      - ~/sharelatex/sharelatex_data:/var/lib/overleaf
+      # Host data root defaults to ${HOME}/sharelatex and can be changed with SHARELATEX_DATA_ROOT_DIR.
+      - ${HOME}/${SHARELATEX_DATA_ROOT_DIR:-sharelatex}/sharelatex_data:/var/lib/overleaf
       ########################################################################
       ####  Server Pro: Uncomment the following line to mount the docker  ####
       ####             socket, required for Sibling Containers to work    ####
@@ -28,7 +29,7 @@ services:
     container_name: mongo
     command: "--replSet overleaf"
     volumes:
-      - ~/sharelatex/mongo_data:/data/db
+      - ${HOME}/${SHARELATEX_DATA_ROOT_DIR:-sharelatex}/mongo_data:/data/db
       - ./bin/shared/mongodb-init-replica-set.js:/docker-entrypoint-initdb.d/mongodb-init-replica-set.js
     environment:
       MONGO_INITDB_DATABASE: sharelatex
@@ -47,7 +48,7 @@ services:
     image: redis:trixie
     container_name: redis
     volumes:
-      - ~/sharelatex/redis_data:/data
+      - ${HOME}/${SHARELATEX_DATA_ROOT_DIR:-sharelatex}/redis_data:/data
 
   # ldap:
   #    restart: always
