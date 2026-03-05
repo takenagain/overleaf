@@ -1,0 +1,30 @@
+FROM sharelatex/sharelatex:latest
+
+# Upgrade TeX Live from 2025 to 2026 in-place, then install only required extras.
+RUN set -eux; \
+  TLROOT=/usr/local/texlive; \
+  TLSRC="${TLROOT}/2025"; \
+  TLDST="${TLROOT}/2026"; \
+  if [ ! -d "${TLSRC}" ]; then \
+    echo "Expected TeX Live source install at ${TLSRC}, but it was not found."; \
+    exit 1; \
+  fi; \
+  if [ ! -d "${TLDST}" ]; then \
+    cp -a "${TLSRC}" "${TLDST}"; \
+  fi; \
+  if [ -d "${TLDST}/tlpkg/backups" ]; then \
+    rm -rf "${TLDST}/tlpkg/backups/"*; \
+  fi; \
+  TLBIN="$(find "${TLDST}/bin" -mindepth 1 -maxdepth 1 -type d | head -n 1)"; \
+  export PATH="${TLBIN}:${PATH}"; \
+  cd "${TLDST}"; \
+  wget -q https://mirror.ctan.org/systems/texlive/tlnet/update-tlmgr-latest.sh; \
+  sh update-tlmgr-latest.sh -- --upgrade; \
+  tlmgr option repository ctan; \
+  tlmgr update --self --all; \
+  if command -v luaotfload-tool >/dev/null 2>&1; then \
+    luaotfload-tool -fu; \
+  fi; \
+  tlmgr install collection-latexextra algorithm2e; \
+  tlmgr path add; \
+  rm -f update-tlmgr-latest.sh

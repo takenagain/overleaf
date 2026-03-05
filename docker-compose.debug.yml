@@ -1,6 +1,9 @@
 version: "2.2"
 services:
   sharelatex:
+    build:
+      context: .
+      dockerfile: Dockerfile.sharelatex
     ports:
       - 30000:30000
       - 30150:30150
