@@ -107,7 +107,7 @@ async function doCompile(request, stats, timings) {
 
   let resourceList, baseHistoryVersion
   try {
-    if (request.historyId) {
+    if (request.rawChangeOperations) {
       ;({ resourceList, baseHistoryVersion } =
         await HistoryResourceWriter.syncResourcesToDisk(
           projectId,
@@ -810,6 +810,7 @@ function _emitMetrics(request, status, stats, timings) {
     draft: request.draft ? 'true' : 'false',
     stop_on_first_error: request.stopOnFirstError ? 'true' : 'false',
     passes,
+    type: request.syncType,
   })
 
   if (timings.sync != null) {
@@ -849,7 +850,7 @@ function _emitMetrics(request, status, stats, timings) {
   if (timings.compileE2E != null) {
     ClsiMetrics.e2eCompileDurationSeconds.observe(
       {
-        compileFromHistory: !!request.historyId,
+        compileFromHistory: !!request.rawChangeOperations,
         compile: request.metricsOpts.compile,
         group: request.compileGroup,
       },
