@@ -7,6 +7,7 @@ import logger from '@overleaf/logger'
 import { expressify } from '@overleaf/promise-utils'
 import mongodb from 'mongodb-legacy'
 import ProjectDeleter from './ProjectDeleter.mjs'
+import { DeletedProjectReasons } from './DeletedProjectReasons.mjs'
 import ProjectDuplicator from './ProjectDuplicator.mjs'
 import ProjectCreationHandler from './ProjectCreationHandler.mjs'
 import EditorController from '../Editor/EditorController.mjs'
@@ -171,6 +172,7 @@ const _ProjectController = {
     await ProjectDeleter.promises.deleteProject(projectId, {
       deleterUser: user,
       ipAddress: req.ip,
+      deletedReason: DeletedProjectReasons.USER,
     })
     ProjectAuditLogHandler.addEntryIfManagedInBackground(
       projectId,
@@ -455,7 +457,6 @@ const _ProjectController = {
       'word-count-client',
       'editor-popup-ux-survey-03-2026',
       'editor-redesign-new-users',
-      'writefull-frontend-migration',
       'chat-edit-delete',
       'ai-workbench-release',
       'compile-timeout-target-plans',
@@ -473,6 +474,7 @@ const _ProjectController = {
       'plans-2026-phase-1',
       'testing-ai-usage',
       'wf-fake-non-english-suggestions',
+      'editor-tabs',
     ].filter(Boolean)
 
     const getUserValues = async userId =>
@@ -615,7 +617,7 @@ const _ProjectController = {
         req,
         projectId
       )
-      const imageNames = ProjectHelper.getAllowedImagesForUser(user)
+      const imageNames = await ProjectHelper.getAllowedImagesForUser(user)
 
       const privilegeLevel =
         await AuthorizationManager.promises.getPrivilegeLevelForProject(
@@ -961,7 +963,7 @@ const _ProjectController = {
         userRestrictions: Array.from(req.userRestrictions || []),
         showAiFeatures,
         onAiFreeTrial:
-          user.features?.aiUsageQuota === Settings.aiFeatures?.freeTrialQuota,
+          fullFeatureSet?.aiUsageQuota === Settings.aiFeatures?.freeTrialQuota,
         detachRole,
         metadata: { viewport: false },
         showUpgradePrompt,
@@ -1080,10 +1082,11 @@ const _ProjectController = {
       refreshTimeoutHandler(),
       (async () => {
         try {
-          user.features = await FeaturesUpdater.promises.refreshFeatures(
+          const { features } = await FeaturesUpdater.promises.refreshFeatures(
             user._id,
             'load-editor'
           )
+          user.features = features
           metrics.inc('features-refresh', 1, {
             path: 'load-editor',
             status: 'success',
