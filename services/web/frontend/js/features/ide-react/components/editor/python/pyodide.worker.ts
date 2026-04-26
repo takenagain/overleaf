@@ -10,6 +10,7 @@ type PyodideFS = PyodideInterface['FS']
 type PyodideModule = typeof import('pyodide')
 
 const PROJECT_FS_ROOT = '/project'
+const PROJECT_FS_PREFIX = `${PROJECT_FS_ROOT}/`
 const PYODIDE_INDEX_PATH = 'js/libs/pyodide/'
 
 function ensureDirectoryExists(fs: PyodideFS, filePath: string) {
@@ -83,17 +84,21 @@ async function handleInit(msg: { baseAssetPath: string }) {
 }
 
 async function handleRunCode(msg: RunCodeRequest) {
+  const { fileId, executionId } = msg
+
   if (!pyodideModule) {
-    const error = 'Pyodide is not initialized'
     self.postMessage({
       type: 'output-line',
       stream: 'stderr',
-      line: error,
-      requestId: msg.id,
+      line: 'Pyodide is not initialized',
+      fileId,
+      executionId,
     })
     self.postMessage({
       type: 'run-code-result',
-      id: msg.id,
+      fileId,
+      executionId,
+      outputs: [],
     })
     return
   }
@@ -102,13 +107,16 @@ async function handleRunCode(msg: RunCodeRequest) {
     env: { MPLBACKEND: 'Agg' },
   })
 
+  const writtenPaths = new Set<string>()
+
   instance.setStdout({
     batched: (line: string) => {
       self.postMessage({
         type: 'output-line',
         stream: 'stdout',
         line,
-        requestId: msg.id,
+        fileId,
+        executionId,
       })
     },
   })
@@ -118,16 +126,31 @@ async function handleRunCode(msg: RunCodeRequest) {
         type: 'output-line',
         stream: 'stderr',
         line,
-        requestId: msg.id,
+        fileId,
+        executionId,
       })
     },
   })
 
+  const fs = instance.FS
+  const originalWrite = fs.write as PyodideFS['write']
   try {
     if (msg.files.length > 0) {
-      const fs = instance.FS
       syncProjectFiles(fs, msg.files)
     }
+
+    fs.write = ((...args: Parameters<PyodideFS['write']>) => {
+      const [stream] = args
+      // Only surface writes to the synced project workspace, not Pyodide internals.
+      if (
+        typeof stream?.path === 'string' &&
+        stream.path.startsWith(PROJECT_FS_PREFIX)
+      ) {
+        writtenPaths.add(stream.path)
+      }
+
+      return originalWrite.call(fs, ...args)
+    }) as PyodideFS['write']
 
     const result = await instance.runPythonAsync(msg.code)
     if (result !== undefined) {
@@ -135,7 +158,8 @@ async function handleRunCode(msg: RunCodeRequest) {
         type: 'output-line',
         stream: 'stdout',
         line: String(result),
-        requestId: msg.id,
+        fileId,
+        executionId,
       })
     }
   } catch (runError) {
@@ -146,14 +170,19 @@ async function handleRunCode(msg: RunCodeRequest) {
       type: 'output-line',
       stream: 'stderr',
       line: errorMessage,
-      requestId: msg.id,
+      fileId,
+      executionId,
+    })
+  } finally {
+    fs.write = originalWrite
+    const outputs = [...writtenPaths].sort()
+    self.postMessage({
+      type: 'run-code-result',
+      fileId,
+      executionId,
+      outputs,
     })
   }
-
-  self.postMessage({
-    type: 'run-code-result',
-    id: msg.id,
-  })
 }
 
 self.addEventListener('message', async event => {

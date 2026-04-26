@@ -181,6 +181,17 @@ TEST_FRONTEND_CT_VARIANTS = \
 	test_frontend_ct_editor_other \
 	test_frontend_ct_editor_visual \
 
+TEST_FRONTEND_CT_TARGETS = \
+	$(TEST_FRONTEND_CT_VARIANTS) \
+	build_test_frontend_ct \
+	test_frontend_ct_ui \
+
+$(TEST_FRONTEND_CT_TARGETS): export USER_UID=$(shell id -u)
+$(TEST_FRONTEND_CT_TARGETS): export USER_GID=$(shell id -g)
+
+test_frontend_ct_ui:
+	docker compose -f docker-compose.cypress.yml run --rm cypress run cypress:open-ct -- --browser chrome
+
 #
 # Writefull tests
 #
@@ -192,7 +203,8 @@ test_writefull:
 
 # Note: The below cypress targets are for CI only
 build_test_frontend_ct:
-	docker run --rm --volume /dev/shm:/dev/shm --user root $(IMAGE_CI) bash -ec 'for path in /overleaf/services/web/cypress/results /overleaf/services/web/node_modules/.cache; do mkdir -p $$path; chown -R node:node $$path; done && tar -cC / overleaf | tar -xC /dev/shm'
+	$(DOCKER_COMPOSE) build test_frontend_ct
+	docker run --rm --volume /dev/shm:/dev/shm --user root $(IMAGE_CI) bash -ec 'for path in /overleaf/services/web/cypress/results /overleaf/services/web/cypress/support /overleaf/services/web/node_modules/.cache; do mkdir -p $$path; chown -R node:node $$path; done && tar -cC / overleaf | tar -xC /dev/shm'
 
 test_frontend_ct_core_other: export CYPRESS_DOWNLOADS=./cypress/downloads/core
 test_frontend_ct_core_other: export CYPRESS_RESULTS=./cypress/results/core
@@ -454,7 +466,7 @@ ci:
 # Run the linting commands in the scope of the monorepo.
 # Eslint and prettier (plus some configs) are on the root.
 RUN_LINTING_CI_MONOREPO = docker run --rm --volume $(MONOREPO)/.editorconfig:/overleaf/.editorconfig --volume $(MONOREPO)/.eslintignore:/overleaf/.eslintignore --volume $(MONOREPO)/.eslintrc:/overleaf/.eslintrc --volume $(MONOREPO)/.prettierignore:/overleaf/.prettierignore --volume $(MONOREPO)/.prettierrc:/overleaf/.prettierrc --volume $(MONOREPO)/tsconfig.backend.json:/overleaf/tsconfig.backend.json --volume $(MONOREPO)/services/web/data/reports:/overleaf/services/web/data/reports --volume $(MONOREPO)/node_modules/.cache/:/overleaf/node_modules/.cache/ -w /overleaf $(IMAGE_CI) npm run --silent
-RUN_LINTING_MONOREPO = docker run --rm -v $(MONOREPO):$(MONOREPO) -w $(MONOREPO) --user node node:24.13.0 npm run --silent
+RUN_LINTING_MONOREPO = docker run --rm -v $(MONOREPO):$(MONOREPO) -w $(MONOREPO) --user node node:24.14.1 npm run --silent
 
 ORG_PATH = /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 RUN_LINT_FORMAT ?= \
@@ -517,6 +529,9 @@ ifeq ($(CI),true)
 else
 	npm run lint:styles
 endif
+
+lint_stylelint_fix:
+	npm run --silent lint:styles:fix
 
 lint: lint_pug
 lint_pug:

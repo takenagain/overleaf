@@ -13,8 +13,13 @@ export IMAGE_TAG_CE ?= sharelatex/sharelatex:main
 export IMAGE_TAG_PRO ?= us-east1-docker.pkg.dev/overleaf-ops/ol-docker/pro:main
 export CYPRESS_SHARD ?=
 export COMPOSE_PROJECT_NAME ?= test
-export DOCKER_USER := $(shell id -u):$(shell id -g)
+export USER_UID=$(shell id -u)
+export USER_GID=$(shell id -g)
 IMAGE_TAG_PRO_BASE := $(shell echo $(IMAGE_TAG_PRO) | sed -E s/:.+//)
+
+print-debug-logs:
+	-docker compose logs sharelatex
+	-docker compose exec sharelatex bash -c 'tail -n100 /var/log/overleaf/*.log'
 
 test-e2e-native:
 	docker compose -f docker-compose.yml -f docker-compose.native.yml up --no-log-prefix sharelatex host-admin -d
@@ -91,7 +96,6 @@ prefetch_old_4_2:
 
 prefetch_custom: prefetch_old_5_0
 prefetch_old_5_0:
-	docker pull $(IMAGE_TAG_PRO_BASE):5.0.1-RC1
 	docker pull $(IMAGE_TAG_PRO_BASE):5.0
 
 prefetch_custom: build_hotfix_5_5_5
@@ -105,5 +109,9 @@ prefetch_default_compose_build: build_mailtrap
 build_mailtrap:
 	git clone https://github.com/dbck/docker-mailtrap.git || true && cd docker-mailtrap && git checkout v1.5.0
 	docker build -t mailtrap docker-mailtrap/build
+
+prefetch_default_compose_build: build_cypress
+build_cypress:
+	docker compose build e2e
 
 .PHONY: test-e2e test-e2e-open

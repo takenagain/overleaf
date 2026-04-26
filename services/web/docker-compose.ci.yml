@@ -87,11 +87,14 @@ services:
       JUNIT_ROOT_SUITE_NAME:
 
   test_frontend_ct:
-    image: cypress/included:13.13.2
+    build:
+      context: ../../dockerfiles/cypress
+      args:
+        - USER_UID
+        - USER_GID
     logging:
       driver: local
     working_dir: /overleaf/services/web
-    user: "${DOCKER_USER:-1000:1000}"
     environment:
       CI:
       CYPRESS_DOWNLOADS:
@@ -131,7 +134,7 @@ services:
     user: root
 
   redis_test:
-    image: redis:7.4.3
+    image: redis:7.4.8
 
   mongo:
     image: mongo:8.0.11
