@@ -1,0 +1,20 @@
+# overleaf-sync-upstream.timer
+# Installed by: bin/install-sync-timer.sh
+#
+# Fires the sync service once per day.
+# Persistent=true means if the machine was off at the scheduled time,
+# the timer fires as soon as it comes back online.
+
+[Unit]
+Description=Daily sync of overleaf fork with upstream/main
+
+[Timer]
+# Run at 03:15 local time every day (off-peak; avoids midnight burst)
+OnCalendar=*-*-* 03:15:00
+# Fire immediately on the next opportunity if the last run was missed
+Persistent=true
+# Randomise start by up to 5 min to spread load when many timers fire at once
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

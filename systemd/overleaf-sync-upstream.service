@@ -1,0 +1,24 @@
+# overleaf-sync-upstream.service
+# Installed by: bin/install-sync-timer.sh
+#
+# Runs bin/sync-upstream.sh once as a one-shot service.
+# stdout/stderr are appended directly to the log file by the script itself;
+# the journal also captures any output that leaks before the log is opened.
+
+[Unit]
+Description=Sync overleaf fork main+staging with upstream/main
+Documentation=file://__REPO_ROOT__/bin/sync-upstream.sh
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=__REPO_ROOT__/bin/sync-upstream.sh
+# Forward journal output to the same log file as a safety net
+StandardOutput=append:__LOG_DIR__/sync-upstream.log
+StandardError=append:__LOG_DIR__/sync-upstream.log
+# Give the network some grace time before giving up on push/fetch
+TimeoutStartSec=300
+
+[Install]
+WantedBy=default.target
