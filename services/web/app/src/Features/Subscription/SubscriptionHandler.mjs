@@ -13,6 +13,8 @@ import UserUpdater from '../User/UserUpdater.mjs'
 import Modules from '../../infrastructure/Modules.mjs'
 import { AI_ADD_ON_CODE } from './AiHelper.mjs'
 import CustomerIoPlanHelpers from './CustomerIoPlanHelpers.mjs'
+import WorkbenchRateLimiter from '../../infrastructure/rate-limiters/WorkbenchRateLimiter.mjs'
+import AiFeatureUsageRateLimiter from '../../infrastructure/rate-limiters/AiFeatureUsageRateLimiter.mjs'
 
 /**
  * @import { PaymentProviderSubscriptionChange } from './PaymentProviderEntities.mjs'
@@ -130,7 +132,16 @@ async function updateSubscription(user, planCode) {
     user._id
   )
 
-  if (previousPlanType) {
+  try {
+    await WorkbenchRateLimiter.resetTokenUsage(user._id)
+    await AiFeatureUsageRateLimiter.resetFeatureUsage(user._id)
+  } catch (err) {
+    logger.error({ err, userId: user._id }, 'failed to reset AI usage limits')
+  }
+
+  const newPlanType =
+    CustomerIoPlanHelpers.normalizePlanTypeFromPlanCode(planCode)
+  if (previousPlanType && previousPlanType !== newPlanType) {
     Modules.promises.hooks
       .fire('setUserProperties', user._id, {
         previous_plan_type: previousPlanType,

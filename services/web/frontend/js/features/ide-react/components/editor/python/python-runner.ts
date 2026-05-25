@@ -1,11 +1,26 @@
 // Per-file Python execution manager. Each PythonRunner owns a PyodideWorkerClient
 // and exposes a subscribe/getState API for use with useSyncExternalStore,
 // so React components can reactively read execution status and output.
+import path from 'path-browserify'
 import { v4 as uuid } from 'uuid'
 import { debugConsole } from '@/utils/debugging'
+import { sendMB } from '@/infrastructure/event-tracking'
 import { PyodideWorkerClient } from './pyodide-worker-client'
+import { showPythonFilesSavedToast } from './python-output-toasts'
+import type { OutputStream } from './pyodide-worker-messages'
+import type {
+  BatchUploadItem,
+  UploadResult,
+} from '@/infrastructure/batch-file-uploader'
+
+export type FileUploader = (items: BatchUploadItem[]) => Promise<UploadResult[]>
 
 const MAX_OUTPUT_LINES = 100
+const PROJECT_FS_PREFIX = '/project/'
+
+function stripProjectFsPrefix(p: string): string {
+  return p.startsWith(PROJECT_FS_PREFIX) ? p.slice(PROJECT_FS_PREFIX.length) : p
+}
 
 export type ExecutionStatus =
   | 'loading'
@@ -21,8 +36,13 @@ export type ExecutionContext = {
 
 type Listener = () => void
 
+export type OutputLine = {
+  stream: OutputStream
+  line: string
+}
+
 export type PythonRunnerState = {
-  output: string[]
+  output: OutputLine[]
   status: ExecutionStatus
   error: string | null
 }
@@ -39,21 +59,25 @@ export class PythonRunner {
   private readonly baseAssetPath: string
   private readonly createWorker: () => Worker
   private readonly getExecutionContext: () => Promise<ExecutionContext | null>
+  private readonly fileUploader: FileUploader
+
   private listeners = new Set<Listener>()
 
-  private activeExecutionId: string | null = null
+  private activeExecution: { id: string; startedAt: number } | null = null
   private state: PythonRunnerState = DEFAULT_STATE
 
   constructor(
     fileId: string,
     baseAssetPath: string,
     getExecutionContext: () => Promise<ExecutionContext | null>,
-    createWorker: () => Worker
+    createWorker: () => Worker,
+    fileUploader: FileUploader
   ) {
     this.fileId = fileId
     this.baseAssetPath = baseAssetPath
     this.createWorker = createWorker
     this.getExecutionContext = getExecutionContext
+    this.fileUploader = fileUploader
   }
 
   subscribe = (listener: Listener): (() => void) => {
@@ -94,6 +118,7 @@ export class PythonRunner {
     this.client = new PyodideWorkerClient({
       baseAssetPath: this.baseAssetPath,
       createWorker: this.createWorker,
+      fileUploader: this.fileUploader,
       onLifecycle: event => {
         switch (event.type) {
           case 'loaded':
@@ -105,22 +130,52 @@ export class PythonRunner {
             this.updateState({ status: 'errored', error: event.error })
             return
 
-          case 'run-finished':
+          case 'run-finished': {
+            const active = this.activeExecution
             if (
               event.fileId !== this.fileId ||
-              this.activeExecutionId !== event.executionId
+              active?.id !== event.executionId
             ) {
               return
             }
-            this.activeExecutionId = null
+
+            this.activeExecution = null
+
+            sendMB('script-runner-execution-completed', {
+              result: event.success ? 'success' : 'error',
+              errorType: event.success ? undefined : event.errorType,
+              executionTimeMs: Math.round(performance.now() - active.startedAt),
+              filesImportedCount: event.imports.length,
+              filesImportedExtensions: collectExtensions(event.imports),
+              filesWrittenCount: event.outputs.length,
+              filesWrittenExtensions: collectExtensions(event.outputs),
+            })
+
+            // event.outputs are full worker paths (/project/foo.txt) while
+            // event.failedUploads are relativePaths (foo.txt); strip the
+            // prefix before comparing.
+            const failed = new Set(event.failedUploads)
+            const uploadedPaths = event.outputs
+              .map(stripProjectFsPrefix)
+              .filter(p => !failed.has(p))
+            if (uploadedPaths.length > 0) {
+              showPythonFilesSavedToast(uploadedPaths)
+            }
+
             this.updateState({ status: 'finished' })
+          }
         }
       },
-      onOutput: (_stream, line, fileId, executionId) => {
-        if (fileId !== this.fileId || this.activeExecutionId !== executionId) {
+      onOutput: (stream, line, fileId, executionId) => {
+        if (
+          fileId !== this.fileId ||
+          this.activeExecution?.id !== executionId
+        ) {
           return
         }
-        this.updateState({ output: appendCapped(this.state.output, line) })
+        this.updateState({
+          output: appendCapped(this.state.output, { stream, line }),
+        })
       },
     })
   }
@@ -151,8 +206,12 @@ export class PythonRunner {
 
     const { code, files } = context
 
+    sendMB('script-runner-run-clicked', {
+      scriptLineCount: countLines(code),
+    })
+
     const executionId = uuid()
-    this.activeExecutionId = executionId
+    this.activeExecution = { id: executionId, startedAt: performance.now() }
     this.updateState({ status: 'running', output: [], error: null })
 
     try {
@@ -162,10 +221,10 @@ export class PythonRunner {
         files,
       })
     } catch (runError) {
-      if (this.activeExecutionId !== executionId) {
+      if (this.activeExecution?.id !== executionId) {
         return
       }
-      this.activeExecutionId = null
+      this.activeExecution = null
       this.updateState({ status: 'errored', error: formatError(runError) })
     }
   }
@@ -175,8 +234,16 @@ export class PythonRunner {
       return
     }
 
+    if (this.state.status === 'running' && this.activeExecution) {
+      sendMB('script-runner-stop-clicked', {
+        timeBeforeStopMs: Math.round(
+          performance.now() - this.activeExecution.startedAt
+        ),
+      })
+    }
+
     this.client.reset()
-    this.activeExecutionId = null
+    this.activeExecution = null
 
     // The worker is terminated and recreated by reset(), so it needs to
     // reload Pyodide. The 'loaded' lifecycle callback will transition
@@ -185,7 +252,10 @@ export class PythonRunner {
       status: 'loading',
       output:
         this.state.status === 'running'
-          ? appendCapped(this.state.output, 'Execution interrupted')
+          ? appendCapped(this.state.output, {
+              stream: 'info',
+              line: 'Execution interrupted',
+            })
           : this.state.output,
     })
   }
@@ -198,8 +268,8 @@ export class PythonRunner {
   }
 }
 
-function appendCapped(existing: string[], line: string): string[] {
-  const updated = [...existing, line]
+function appendCapped(existing: OutputLine[], entry: OutputLine): OutputLine[] {
+  const updated = [...existing, entry]
   return updated.length > MAX_OUTPUT_LINES
     ? updated.slice(-MAX_OUTPUT_LINES)
     : updated
@@ -210,4 +280,26 @@ function formatError(error: unknown): string {
     return error.message
   }
   return String(error)
+}
+
+function countLines(code: string): number {
+  if (code.length === 0) {
+    return 0
+  }
+  return code.split('\n').length
+}
+
+function extractExtension(filePath: string): string {
+  return path.extname(filePath).slice(1).toLowerCase()
+}
+
+function collectExtensions(filePaths: string[]): string {
+  const seen = new Set<string>()
+  for (const filePath of filePaths) {
+    const ext = extractExtension(filePath)
+    if (ext) {
+      seen.add(ext)
+    }
+  }
+  return Array.from(seen).join(',')
 }

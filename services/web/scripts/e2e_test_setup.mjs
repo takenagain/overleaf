@@ -139,7 +139,7 @@ async function purgeNewUsers() {
   )
 }
 
-export async function provisionSplitTests(merge = false) {
+export async function provisionSplitTests(merge = false, extraSplitTests = []) {
   const backup = Path.join(
     MONOREPO,
     'backup',
@@ -159,12 +159,13 @@ export async function provisionSplitTests(merge = false) {
   // Imported from production via https://www.overleaf.com/admin/split-test -> "Copy all split tests" -> "Copy for E2E test setup"
   const SPLIT_TESTS = JSON.parse(
     await fs.promises.readFile(
-      Path.join(MONOREPO, 'tools/saas-e2e/split-tests.json')
+      Path.join(MONOREPO, 'tools/saas-e2e/split-tests.json'),
+      'utf-8'
     )
   )
   // Add WIP split test, we can update the JSON blob once this is in production
   SPLIT_TESTS.push({
-    name: 'compile-from-history',
+    name: 'zip-from-history',
     versions: [
       {
         versionNumber: 1,
@@ -187,6 +188,9 @@ export async function provisionSplitTests(merge = false) {
     await SplitTestManager.mergeSplitTests(SPLIT_TESTS, false)
   } else {
     await SplitTestManager.replaceSplitTests(SPLIT_TESTS)
+  }
+  if (extraSplitTests.length > 0) {
+    await SplitTestManager.mergeSplitTests(extraSplitTests, false)
   }
 }
 

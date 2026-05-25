@@ -2,7 +2,7 @@ const path = require('path')
 const { globSync } = require('glob')
 const webpack = require('webpack')
 const CopyPlugin = require('copy-webpack-plugin')
-const WebpackAssetsManifest = require('webpack-assets-manifest')
+const { WebpackAssetsManifest } = require('webpack-assets-manifest')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const {
   LezerGrammarCompilerPlugin,
@@ -307,15 +307,11 @@ module.exports = {
     ],
   },
   resolve: {
+    tsconfig: path.resolve(__dirname, 'tsconfig.json'),
     alias: {
-      // custom prefixes for import paths
-      '@': path.resolve(__dirname, './frontend/js/'),
-      '@modules': path.resolve(__dirname, './modules/'),
-      '@ol-types': path.resolve(__dirname, './types/'),
-      '@wf': path.resolve(
-        __dirname,
-        './modules/writefull/frontend/js/integration/src/'
-      ),
+      // Ensure all packages use the same jQuery instance (prevents duplicate
+      // copies from Yarn hoisting breaking jQuery plugins like daterangepicker)
+      jquery: require.resolve('jquery'),
     },
     // symlinks: false, // enable this while using `npm link`
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.json'],
@@ -408,7 +404,9 @@ module.exports = {
           toType: 'dir',
           context: `${dictionariesDir}/dictionaries`,
         },
-        // Copy Pyodide runtime assets from npm package for local serving.
+        // Copy Pyodide runtime assets from the npm package so the loader is
+        // always available. Python package wheels are fetched separately by
+        // scripts/fetch-pyodide-packages.mjs into the same directory on disk.
         {
           from: 'pyodide.mjs',
           to: 'js/libs/pyodide',

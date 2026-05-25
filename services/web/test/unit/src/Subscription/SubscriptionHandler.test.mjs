@@ -145,6 +145,14 @@ describe('SubscriptionHandler', function () {
       },
     }
 
+    ctx.WorkbenchRateLimiter = {
+      resetTokenUsage: sinon.stub().resolves(),
+    }
+
+    ctx.AiFeatureUsageRateLimiter = {
+      resetFeatureUsage: sinon.stub().resolves(),
+    }
+
     vi.doMock(
       '../../../../app/src/Features/Subscription/RecurlyWrapper',
       () => ({
@@ -226,6 +234,20 @@ describe('SubscriptionHandler', function () {
         },
       }),
     }))
+
+    vi.doMock(
+      '../../../../app/src/infrastructure/rate-limiters/WorkbenchRateLimiter',
+      () => ({
+        default: ctx.WorkbenchRateLimiter,
+      })
+    )
+
+    vi.doMock(
+      '../../../../app/src/infrastructure/rate-limiters/AiFeatureUsageRateLimiter',
+      () => ({
+        default: ctx.AiFeatureUsageRateLimiter,
+      })
+    )
 
     ctx.SubscriptionHandler = (await import(MODULE_PATH)).default
   })
@@ -378,6 +400,85 @@ describe('SubscriptionHandler', function () {
         ctx.plan_code,
         ctx.user._id
       )
+    })
+
+    it('should reset the ai rate limiter usages on a successful update', async function (ctx) {
+      ctx.LimitationsManager.promises.userHasSubscription.resolves({
+        hasSubscription: true,
+        subscription: ctx.subscription,
+      })
+      await ctx.SubscriptionHandler.promises.updateSubscription(
+        ctx.user,
+        ctx.plan_code
+      )
+      expect(ctx.WorkbenchRateLimiter.resetTokenUsage).to.have.been.calledWith(
+        ctx.user._id
+      )
+      expect(
+        ctx.AiFeatureUsageRateLimiter.resetFeatureUsage
+      ).to.have.been.calledWith(ctx.user._id)
+    })
+
+    it('should not reset the ai rate limiter usages when no subscription exists', async function (ctx) {
+      ctx.LimitationsManager.promises.userHasSubscription.resolves({
+        hasSubscription: false,
+        subscription: null,
+      })
+      await ctx.SubscriptionHandler.promises.updateSubscription(
+        ctx.user,
+        ctx.plan_code
+      )
+      expect(ctx.WorkbenchRateLimiter.resetTokenUsage).to.not.have.been.called
+      expect(ctx.AiFeatureUsageRateLimiter.resetFeatureUsage).to.not.have.been
+        .called
+    })
+
+    describe('previous_plan_type customer.io attribute', function () {
+      beforeEach(function (ctx) {
+        ctx.subscription.planCode = 'collaborator'
+        ctx.subscription.groupPlan = false
+        ctx.LimitationsManager.promises.userHasSubscription.resolves({
+          hasSubscription: true,
+          subscription: ctx.subscription,
+        })
+        ctx.Modules.promises.hooks.fire.resolves()
+      })
+
+      it('should not set previous_plan_type when the new plan code matches the current plan code', async function (ctx) {
+        await ctx.SubscriptionHandler.promises.updateSubscription(
+          ctx.user,
+          'collaborator'
+        )
+        expect(ctx.Modules.promises.hooks.fire).to.not.have.been.calledWith(
+          'setUserProperties',
+          sinon.match.any,
+          sinon.match.has('previous_plan_type')
+        )
+      })
+
+      it('should not set previous_plan_type when the new plan code resolves to the same normalised plan type', async function (ctx) {
+        await ctx.SubscriptionHandler.promises.updateSubscription(
+          ctx.user,
+          'collaborator-annual'
+        )
+        expect(ctx.Modules.promises.hooks.fire).to.not.have.been.calledWith(
+          'setUserProperties',
+          sinon.match.any,
+          sinon.match.has('previous_plan_type')
+        )
+      })
+
+      it('should set previous_plan_type when the new plan resolves to a different normalised plan type', async function (ctx) {
+        await ctx.SubscriptionHandler.promises.updateSubscription(
+          ctx.user,
+          'professional'
+        )
+        expect(ctx.Modules.promises.hooks.fire).to.have.been.calledWith(
+          'setUserProperties',
+          ctx.user._id,
+          { previous_plan_type: 'standard' }
+        )
+      })
     })
   })
 

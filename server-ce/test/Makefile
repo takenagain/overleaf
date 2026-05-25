@@ -18,7 +18,15 @@ export USER_GID=$(shell id -g)
 IMAGE_TAG_PRO_BASE := $(shell echo $(IMAGE_TAG_PRO) | sed -E s/:.+//)
 
 print-debug-logs:
-	-docker compose logs sharelatex
+	-docker compose logs --timestamps --tail=100 e2e
+	-docker compose logs --timestamps --tail=100 mongo
+	-docker compose logs --timestamps --tail=100 redis
+	-docker compose logs --timestamps --tail=100 mailtrap
+	-docker compose logs --timestamps --tail=100 saml
+	-docker compose logs --timestamps --tail=100 ldap
+	-docker compose logs --timestamps --tail=100 git-bridge
+	-docker compose logs --timestamps --tail=100 host-admin
+	-docker compose logs --timestamps sharelatex
 	-docker compose exec sharelatex bash -c 'tail -n100 /var/log/overleaf/*.log'
 
 test-e2e-native:
@@ -27,7 +35,7 @@ test-e2e-native:
 	CYPRESS_HOST_ADMIN_URL='http://127.0.0.1:3232' \
 	CYPRESS_SAML_URL='http://127.0.0.1:3233' \
 	CYPRESS_MAILTRAP_URL='http://127.0.0.1:3234' \
-		npm run cypress:open
+		yarn run cypress:open
 
 # For testing "native" on Linux
 test-e2e-native-linux:
@@ -39,7 +47,7 @@ test-e2e-native-linux:
 		docker compose -f docker-compose.yml -f docker-compose.native.yml up --no-log-prefix cypress
 
 test-e2e:
-	docker compose build host-admin
+	docker compose build host-admin e2e
 	docker compose up --detach --wait host-admin
 	docker compose up --detach --wait mongo
 	docker compose up --no-log-prefix --exit-code-from=e2e e2e host-admin
@@ -73,7 +81,7 @@ prefetch_default_compose:
 
 prefetch_default: prefetch_default_compose_build
 prefetch_default_compose_build:
-	docker compose build host-admin
+	docker compose build host-admin e2e
 
 prefetch: prefetch_custom
 prefetch_custom: prefetch_custom_compose_pull

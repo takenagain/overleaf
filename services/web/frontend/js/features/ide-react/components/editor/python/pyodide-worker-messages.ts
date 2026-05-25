@@ -1,6 +1,13 @@
+export type OutputStream = 'stdout' | 'stderr' | 'info'
+
 export type ProjectFileData = {
   relativePath: string
   content: string
+}
+
+export type OutputFileData = {
+  relativePath: string
+  content: Uint8Array
 }
 
 // Main thread -> Worker messages
@@ -28,7 +35,7 @@ export type LoadingFailedEvent = { type: 'loading-failed'; error: string }
 
 export type OutputLineEvent = {
   type: 'output-line'
-  stream: 'stdout' | 'stderr'
+  stream: OutputStream
   line: string
   fileId: string
   executionId: string
@@ -42,11 +49,24 @@ export type PyodideWorkerEvent =
 
 // Worker -> Main thread ID responses
 
+export type ExecutionErrorType =
+  | 'SyntaxError'
+  | 'ModuleNotFoundError'
+  | 'OutputLimitExceeded'
+  | 'UploadFileError'
+  | 'generic'
+
+export type ExecutionResult = 'success' | 'error'
+
 export type RunCodeResult = {
   type: 'run-code-result'
   fileId: string
   executionId: string
+  success: boolean
   outputs: string[]
+  outputFiles: OutputFileData[]
+  imports: string[]
+  errorType?: ExecutionErrorType
 }
 
 export type PyodideWorkerResponse = PyodideWorkerEvent | RunCodeResult

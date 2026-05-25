@@ -2,8 +2,10 @@ import { expect } from 'chai'
 import sinon from 'sinon'
 import {
   PythonRunner,
+  PythonRunnerState,
   DEFAULT_STATE,
   ExecutionContext,
+  type FileUploader,
 } from '@/features/ide-react/components/editor/python/python-runner'
 import { WorkerMock, createWorker } from './worker-mock'
 
@@ -14,6 +16,7 @@ function createRunner(
   overrides: {
     fileId?: string
     getExecutionContext?: () => Promise<ExecutionContext | null>
+    fileUploader?: FileUploader
   } = {}
 ) {
   const fileId = overrides.fileId ?? FILE_ID
@@ -25,11 +28,14 @@ function createRunner(
         files: [{ relativePath: 'main.py', content: 'print("hello")' }],
       }))
 
+  const fileUploader = overrides.fileUploader ?? sinon.stub().resolves([])
+
   const runner = new PythonRunner(
     fileId,
     BASE_ASSET_PATH,
     getExecutionContext,
-    createWorker
+    createWorker,
+    fileUploader
   )
   return runner
 }
@@ -40,6 +46,24 @@ function initAndLoad(runner: PythonRunner) {
   worker.emitMessage({ type: 'listening' })
   worker.emitMessage({ type: 'loaded' })
   return worker
+}
+
+function waitForState(
+  runner: PythonRunner,
+  predicate: (state: PythonRunnerState) => boolean
+): Promise<PythonRunnerState> {
+  return new Promise(resolve => {
+    if (predicate(runner.getState())) {
+      resolve(runner.getState())
+      return
+    }
+    const unsubscribe = runner.subscribe(() => {
+      if (predicate(runner.getState())) {
+        unsubscribe()
+        resolve(runner.getState())
+      }
+    })
+  })
 }
 
 describe('PythonRunner', function () {
@@ -110,9 +134,13 @@ describe('PythonRunner', function () {
         type: 'run-code-result',
         fileId: FILE_ID,
         executionId: runMsg.executionId,
+        success: true,
         outputs: [],
+        outputFiles: [],
+        imports: [],
       })
 
+      await waitForState(runner, s => s.status === 'finished')
       expect(runner.getState().status).to.equal('finished')
     })
 
@@ -133,9 +161,14 @@ describe('PythonRunner', function () {
         type: 'run-code-result',
         fileId: FILE_ID,
         executionId: runMsg.executionId,
+        success: true,
         outputs: [],
+        outputFiles: [],
+        imports: [],
       })
-      expect(runner.getState().output).to.deep.equal(['first run output'])
+      expect(runner.getState().output).to.deep.equal([
+        { stream: 'stdout', line: 'first run output' },
+      ])
 
       await runner.run()
       expect(runner.getState().output).to.deep.equal([])
@@ -170,6 +203,137 @@ describe('PythonRunner', function () {
     })
   })
 
+  describe('files-saved toast', function () {
+    let toastEvents: CustomEvent[]
+    let toastListener: (event: Event) => void
+
+    beforeEach(function () {
+      toastEvents = []
+      toastListener = event => {
+        toastEvents.push(event as CustomEvent)
+      }
+      window.addEventListener('ide:show-toast', toastListener)
+    })
+
+    afterEach(function () {
+      window.removeEventListener('ide:show-toast', toastListener)
+    })
+
+    it('dispatches a files-saved toast with successfully uploaded paths', async function () {
+      const runner = createRunner()
+      const worker = initAndLoad(runner)
+
+      await runner.run()
+      const runMsg = worker.postedMessages.find(m => m.type === 'run-code')
+      worker.emitMessage({
+        type: 'run-code-result',
+        fileId: FILE_ID,
+        executionId: runMsg.executionId,
+        success: true,
+        outputs: ['/project/foo.txt', '/project/bar.csv'],
+        outputFiles: [],
+        imports: [],
+        failedUploads: [],
+      })
+
+      await waitForState(runner, s => s.status === 'finished')
+
+      expect(toastEvents).to.have.length(1)
+      expect(toastEvents[0].detail).to.deep.equal({
+        key: 'python:files-saved',
+        paths: ['foo.txt', 'bar.csv'],
+      })
+    })
+
+    it('excludes failed uploads from the toast', async function () {
+      const fileUploader = sinon.stub().resolves([
+        { status: 'success', name: 'foo.txt', relativePath: 'foo.txt' },
+        {
+          status: 'error',
+          name: 'bar.csv',
+          relativePath: 'bar.csv',
+          error: 'boom',
+        },
+      ])
+      const runner = createRunner({ fileUploader })
+      const worker = initAndLoad(runner)
+
+      await runner.run()
+      const runMsg = worker.postedMessages.find(m => m.type === 'run-code')
+      worker.emitMessage({
+        type: 'run-code-result',
+        fileId: FILE_ID,
+        executionId: runMsg.executionId,
+        success: true,
+        outputs: ['/project/foo.txt', '/project/bar.csv'],
+        outputFiles: [
+          { relativePath: 'foo.txt', content: new Uint8Array() },
+          { relativePath: 'bar.csv', content: new Uint8Array() },
+        ],
+        imports: [],
+      })
+
+      await waitForState(runner, s => s.status === 'finished')
+
+      expect(toastEvents).to.have.length(1)
+      expect(toastEvents[0].detail).to.deep.equal({
+        key: 'python:files-saved',
+        paths: ['foo.txt'],
+      })
+    })
+
+    it('does not dispatch a toast when no outputs were written', async function () {
+      const runner = createRunner()
+      const worker = initAndLoad(runner)
+
+      await runner.run()
+      const runMsg = worker.postedMessages.find(m => m.type === 'run-code')
+      worker.emitMessage({
+        type: 'run-code-result',
+        fileId: FILE_ID,
+        executionId: runMsg.executionId,
+        success: true,
+        outputs: [],
+        outputFiles: [],
+        imports: [],
+        failedUploads: [],
+      })
+
+      await waitForState(runner, s => s.status === 'finished')
+
+      expect(toastEvents).to.have.length(0)
+    })
+
+    it('does not dispatch a toast when every output failed to upload', async function () {
+      const fileUploader = sinon.stub().resolves([
+        {
+          status: 'error',
+          name: 'foo.txt',
+          relativePath: 'foo.txt',
+          error: 'boom',
+        },
+      ])
+      const runner = createRunner({ fileUploader })
+      const worker = initAndLoad(runner)
+
+      await runner.run()
+      const runMsg = worker.postedMessages.find(m => m.type === 'run-code')
+      worker.emitMessage({
+        type: 'run-code-result',
+        fileId: FILE_ID,
+        executionId: runMsg.executionId,
+        success: true,
+        outputs: ['/project/foo.txt'],
+        outputFiles: [{ relativePath: 'foo.txt', content: new Uint8Array() }],
+        imports: [],
+      })
+
+      await waitForState(runner, s => s.status === 'finished')
+
+      expect(toastEvents).to.have.length(0)
+    })
+  })
+
   describe('output', function () {
     it('accumulates output lines for the matching file', async function () {
       const runner = createRunner()
@@ -193,7 +357,10 @@ describe('PythonRunner', function () {
         executionId: runMsg.executionId,
       })
 
-      expect(runner.getState().output).to.deep.equal(['line 1', 'line 2'])
+      expect(runner.getState().output).to.deep.equal([
+        { stream: 'stdout', line: 'line 1' },
+        { stream: 'stderr', line: 'line 2' },
+      ])
     })
 
     it('ignores output for a different fileId', async function () {
@@ -250,8 +417,8 @@ describe('PythonRunner', function () {
 
       const output = runner.getState().output
       expect(output).to.have.length(100)
-      expect(output[0]).to.equal('line 10')
-      expect(output[99]).to.equal('line 109')
+      expect(output[0]).to.deep.equal({ stream: 'stdout', line: 'line 10' })
+      expect(output[99]).to.deep.equal({ stream: 'stdout', line: 'line 109' })
     })
   })
 
@@ -274,8 +441,8 @@ describe('PythonRunner', function () {
 
       expect(runner.getState().status).to.equal('loading')
       expect(runner.getState().output).to.deep.equal([
-        'partial output',
-        'Execution interrupted',
+        { stream: 'stdout', line: 'partial output' },
+        { stream: 'info', line: 'Execution interrupted' },
       ])
     })
 

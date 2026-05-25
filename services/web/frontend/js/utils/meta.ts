@@ -7,6 +7,7 @@ import { ExposedSettings } from '../../../types/exposed-settings'
 import {
   type ImageName,
   OverallThemeMeta,
+  ProjectCompiler,
   type SpellCheckLanguage,
 } from '../../../types/project-settings'
 import { CurrencyCode } from '../../../types/subscription/currency'
@@ -116,6 +117,7 @@ export interface Meta {
   'ol-currentUrl': string
   'ol-customerIoEnabled': boolean
   'ol-debugPdfDetach': boolean
+  'ol-defaultLatexCompiler': ProjectCompiler
   'ol-detachRole': 'detached' | 'detacher' | ''
   'ol-dictionariesRoot': 'string'
   'ol-domainCaptureEnabled': boolean | undefined
@@ -131,7 +133,6 @@ export interface Meta {
   'ol-featureUsage': FeatureUsage
   'ol-features': Features
   'ol-footer': FooterMetadata
-  'ol-fromPlansPage': boolean
   'ol-galleryTagName': string
   'ol-gitBridgeEnabled': boolean
   'ol-gitBridgePublicBaseUrl': string
@@ -185,10 +186,12 @@ export interface Meta {
   'ol-isCollectionMethodManual': boolean
   'ol-isExternalAuthenticationSystemUsed': boolean
   'ol-isManagedAccount': boolean
+  'ol-isManagedGroupAdmin': boolean
   'ol-isProfessional': boolean
   'ol-isRegisteredViaGoogle': boolean
   'ol-isRestrictedTokenMember': boolean
   'ol-isSaas': boolean
+  'ol-isUpgrade': boolean
   'ol-isUserGroupManager': boolean
   'ol-itm_campaign': string
   'ol-itm_content': string
