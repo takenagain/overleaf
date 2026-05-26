@@ -485,6 +485,7 @@ const _ProjectController = {
       'sharing-updates',
       'export-markdown',
       'command-palette',
+      'overleaf-library',
     ].filter(Boolean)
 
     const getUserValues = async userId =>
@@ -902,6 +903,10 @@ const _ProjectController = {
         userSettings?.overallTheme
       )
 
+      if (user.labsProgram) {
+        await Modules.promises.hooks.fire('assignLabsSplitTests', req, res)
+      }
+
       res.render(template, {
         title: project.name,
         priority_title: true,
@@ -943,7 +948,6 @@ const _ProjectController = {
         },
         initialLoadingScreenTheme,
         userSettings,
-        labsExperiments: user.labsExperiments ?? [],
         privilegeLevel,
         anonymous,
         isTokenMember,
