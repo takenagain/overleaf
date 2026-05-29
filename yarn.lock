@@ -1803,9 +1803,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/plugin-transform-modules-systemjs@npm:^7.28.5":
-  version: 7.29.0
-  resolution: "@babel/plugin-transform-modules-systemjs@npm:7.29.0"
+"@babel/plugin-transform-modules-systemjs@npm:7.29.4":
+  version: 7.29.4
+  resolution: "@babel/plugin-transform-modules-systemjs@npm:7.29.4"
   dependencies:
     "@babel/helper-module-transforms": "npm:^7.28.6"
     "@babel/helper-plugin-utils": "npm:^7.28.6"
@@ -1813,7 +1813,7 @@ __metadata:
     "@babel/traverse": "npm:^7.29.0"
   peerDependencies:
     "@babel/core": ^7.0.0-0
-  checksum: 10c0/44ea502f2c990398b7d9adc5b44d9e1810a0a5e86eebc05c92d039458f0b3994fe243efa9353b90f8a648d8a91b79845fb353d8679d7324cc9de0162d732771d
+  checksum: 10c0/1da94f89ef8ba1aa1501136a80eb4c010c6a19f5550e10db84677b3ccb7a4934c8098f2b5134def87cf513bf05747ffa523d33722a1ea5a5c8ef956e9136c4c2
   languageName: node
   linkType: hard
 
@@ -6453,7 +6453,6 @@ __metadata:
     nyc: "npm:^17.1.0"
     overleaf-editor-core: "workspace:*"
     p-limit: "npm:^3.1.0"
-    request: "npm:2.88.2"
     send: "npm:^0.19.0"
     sinon: "npm:~9.0.1"
     sinon-chai: "npm:^3.7.0"
@@ -6565,8 +6564,9 @@ __metadata:
   resolution: "@overleaf/eslint-plugin@workspace:libraries/eslint-plugin"
   dependencies:
     "@typescript-eslint/parser": "npm:^8.50.0"
-    eslint: "npm:^8.51.0"
     lodash: "npm:^4.18.1"
+  peerDependencies:
+    eslint: ^8.51.0
   languageName: unknown
   linkType: soft
 
@@ -6886,7 +6886,6 @@ __metadata:
     nock: "npm:^13.5.3"
     overleaf-editor-core: "workspace:*"
     p-queue: "npm:^8.1.0"
-    request: "npm:2.88.2"
     sinon: "npm:~9.0.1"
     sinon-chai: "npm:^3.7.0"
     timekeeper: "npm:2.2.0"
@@ -7281,7 +7280,7 @@ __metadata:
     "@types/sanitize-html": "npm:^2.14.0"
     "@types/sinon-chai": "npm:^3.2.12"
     "@types/utf-8-validate": "npm:^5.0.2"
-    "@types/uuid": "npm:^9.0.8"
+    "@types/uuid": "npm:^10.0.0"
     "@uppy/core": "npm:^3.8.0"
     "@uppy/dashboard": "npm:3.7.1"
     "@uppy/drag-drop": "npm:3.0.3"
@@ -7506,7 +7505,7 @@ __metadata:
     unist-util-visit: "npm:^5.0.0"
     use-stick-to-bottom: "npm:^1.1.1"
     utf-8-validate: "npm:^5.0.2"
-    uuid: "npm:^9.0.1"
+    uuid: "npm:^11.0.0"
     valid-data-url: "npm:^2.0.0"
     valid-url: "npm:^1.0.9"
     vitest: "npm:4.1.5"
@@ -11459,6 +11458,13 @@ __metadata:
   dependencies:
     "@types/node": "npm:*"
   checksum: 10c0/3544eddd326ee53184dd0972fdc172baa9f8c4b83f5936257eaf58b8d7e533db25435d5812037f9ffa916693afcae1ba8431d67810ce0722dbc0d94aa333c2b1
+  languageName: node
+  linkType: hard
+
+"@types/uuid@npm:^10.0.0":
+  version: 10.0.0
+  resolution: "@types/uuid@npm:10.0.0"
+  checksum: 10c0/9a1404bf287164481cb9b97f6bb638f78f955be57c40c6513b7655160beb29df6f84c915aaf4089a1559c216557dc4d2f79b48d978742d3ae10b937420ddac60
   languageName: node
   linkType: hard
 
@@ -17966,7 +17972,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint@npm:^8.15.0, eslint@npm:^8.51.0, eslint@npm:^8.57.0":
+"eslint@npm:^8.15.0, eslint@npm:^8.57.0":
   version: 8.57.1
   resolution: "eslint@npm:8.57.1"
   dependencies:
@@ -22016,9 +22022,9 @@ __metadata:
   linkType: hard
 
 "js-cookie@npm:^3.0.5":
-  version: 3.0.5
-  resolution: "js-cookie@npm:3.0.5"
-  checksum: 10c0/04a0e560407b4489daac3a63e231d35f4e86f78bff9d792011391b49c59f721b513411cd75714c418049c8dc9750b20fcddad1ca5a2ca616c3aca4874cce5b3a
+  version: 3.0.7
+  resolution: "js-cookie@npm:3.0.7"
+  checksum: 10c0/c921c43014e98bb94a1765663a1a10d693048d61444e374c1ecf459eba92320381f9c406e724df9aa44e819c4b606e6a7240f2abe2d5c54ad1e73a3002b191c2
   languageName: node
   linkType: hard
 
@@ -33234,13 +33240,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"underscore@npm:1.12.1":
-  version: 1.12.1
-  resolution: "underscore@npm:1.12.1"
-  checksum: 10c0/00f392357e363353ac485e7c156b749505087e31ff4fdad22e04ebd2f94a56fbc554cd41a6722e3895a818466cf298b1cae93ff6211d102d373a9b50db63bfd0
-  languageName: node
-  linkType: hard
-
 "underscore@npm:1.13.8, underscore@npm:>=1.8.3":
   version: 1.13.8
   resolution: "underscore@npm:1.13.8"
@@ -33621,6 +33620,15 @@ __metadata:
   bin:
     uuid: dist/bin/uuid
   checksum: 10c0/eab18c27fe4ab9fb9709a5d5f40119b45f2ec8314f8d4cf12ce27e4c6f4ffa4a6321dc7db6c515068fa373c075b49691ba969f0010bf37f44c37ca40cd6bf7fe
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^11.0.0":
+  version: 11.1.1
+  resolution: "uuid@npm:11.1.1"
+  bin:
+    uuid: dist/esm/bin/uuid
+  checksum: 10c0/9e3af58eba872ece5a5e76f4773a94fc78a0ef2c2444c38dbe6b42f41dadf76c01850fd783604f27986f6195e6286aef064d45987d401b2a33127b98ddf7c0c5
   languageName: node
   linkType: hard
 
