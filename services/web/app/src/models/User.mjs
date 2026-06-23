@@ -18,7 +18,6 @@ const refProviderSettingsSchema = {
     default: [],
   },
   disablePersonalLibrary: { type: Boolean, default: false },
-  migrated: { type: Boolean, default: false },
 }
 
 export const UserSchema = new Schema(
@@ -106,9 +105,11 @@ export const UserSchema = new Schema(
       lineHeight: { type: String },
       mathPreview: { type: Boolean, default: true },
       breadcrumbs: { type: Boolean, default: true },
+      editorTabs: { type: Boolean, default: true },
       nonBlinkingCursor: { type: Boolean, default: false },
       referencesSearchMode: { type: String, default: 'advanced' }, // 'advanced' or 'simple'
       darkModePdf: { type: Boolean, default: false },
+      floatingMenu: { type: Boolean, default: true },
       zotero: refProviderSettingsSchema,
       mendeley: refProviderSettingsSchema,
       papers: refProviderSettingsSchema,
@@ -243,6 +244,10 @@ export const UserSchema = new Schema(
     suspended: { type: Boolean },
     dsMobileApp: {
       subscribed: { type: Boolean },
+    },
+    stripeCustomerIds: {
+      us: { type: String },
+      uk: { type: String },
     },
   },
   { minimize: false }

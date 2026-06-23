@@ -3,9 +3,6 @@ import cheerio from 'cheerio'
 import path from 'node:path'
 
 import EmailMessageHelper from '../../../../app/src/Features/Email/EmailMessageHelper.mjs'
-import ctaEmailBody from '../../../../app/src/Features/Email/Bodies/cta-email.mjs'
-import NoCTAEmailBody from '../../../../app/src/Features/Email/Bodies/NoCTAEmailBody.mjs'
-import BaseEmailLayout from '../../../../app/src/Features/Email/Layouts/BaseEmailLayout.mjs'
 
 const MODULE_PATH = path.join(
   import.meta.dirname,
@@ -17,29 +14,12 @@ describe('EmailBuilder', function () {
     ctx.settings = {
       appName: 'testApp',
       siteUrl: 'https://www.overleaf.com',
+      adminEmail: 'admin@overleaf.test',
     }
 
     vi.doMock('../../../../app/src/Features/Email/EmailMessageHelper', () => ({
       default: EmailMessageHelper,
     }))
-
-    vi.doMock('../../../../app/src/Features/Email/Bodies/cta-email', () => ({
-      default: ctaEmailBody,
-    }))
-
-    vi.doMock(
-      '../../../../app/src/Features/Email/Bodies/NoCTAEmailBody',
-      () => ({
-        default: NoCTAEmailBody,
-      })
-    )
-
-    vi.doMock(
-      '../../../../app/src/Features/Email/Layouts/BaseEmailLayout',
-      () => ({
-        default: BaseEmailLayout,
-      })
-    )
 
     vi.doMock('@overleaf/settings', () => ({
       default: ctx.settings,
@@ -642,55 +622,6 @@ describe('EmailBuilder', function () {
         })
       })
 
-      describe('welcome', function () {
-        beforeEach(function (ctx) {
-          ctx.emailAddress = 'example@overleaf.com'
-          ctx.opts = {
-            to: ctx.emailAddress,
-            confirmEmailUrl: `${ctx.settings.siteUrl}/user/emails/confirm?token=token123`,
-          }
-          ctx.email = ctx.EmailBuilder.buildEmail('welcome', ctx.opts)
-          ctx.dom = cheerio.load(ctx.email.html)
-        })
-
-        it('should build the email', function (ctx) {
-          expect(ctx.email.html).to.exist
-          expect(ctx.email.text).to.exist
-        })
-
-        describe('HTML email', function () {
-          it('should include a CTA button and a fallback CTA link', function (ctx) {
-            const buttonLink = ctx.dom('a:contains("Confirm email")')
-            expect(buttonLink.length).to.equal(1)
-            expect(buttonLink.attr('href')).to.equal(ctx.opts.confirmEmailUrl)
-            expect(ctx.email.html).to.contain('copy and paste this link')
-            expect(ctx.email.html).to.contain(ctx.opts.confirmEmailUrl)
-          })
-          it('should include help links', function (ctx) {
-            const helpGuidesLink = ctx.dom('a:contains("Help Guides")')
-            const templatesLink = ctx.dom('a:contains("Templates")')
-            const logInLink = ctx.dom('a:contains("log in")')
-            expect(helpGuidesLink.length).to.equal(1)
-            expect(templatesLink.length).to.equal(1)
-            expect(logInLink.length).to.equal(1)
-          })
-        })
-
-        describe('plain text email', function () {
-          it('should contain the CTA URL', function (ctx) {
-            expect(ctx.email.text).to.contain(ctx.opts.confirmEmailUrl)
-          })
-          it('should include help URL', function (ctx) {
-            expect(ctx.email.text).to.contain('/learn')
-            expect(ctx.email.text).to.contain('/login')
-            expect(ctx.email.text).to.contain('/templates')
-          })
-          it('should contain HTML links', function (ctx) {
-            expect(ctx.email.text).to.not.contain('<a')
-          })
-        })
-      })
-
       describe('groupSSODisabled', function () {
         it('should build the email for non managed and linked users', function (ctx) {
           const setNewPasswordUrl = `${ctx.settings.siteUrl}/user/password/reset`
@@ -1031,6 +962,50 @@ describe('EmailBuilder', function () {
           it('should contain the CTA link', function (ctx) {
             expect(ctx.email.text).to.contain(ctx.expectedUrl)
           })
+        })
+      })
+
+      describe('groupDomainCapturedByGroupChanged', function () {
+        it('should build active-domain-capture email', function (ctx) {
+          const email = ctx.EmailBuilder.buildEmail(
+            'groupDomainCapturedByGroupChanged',
+            {
+              to: 'admin@example.com',
+              groupId: 'group-123',
+              domainCapturedByGroup: true,
+              domain: 'example.com',
+            }
+          )
+
+          expect(email.subject).to.equal(
+            'Domain capture now active for example.com'
+          )
+          expect(email.html).to.contain(
+            'Domain capture is active for example.com'
+          )
+          expect(email.html).to.contain('/manage/groups/group-123/settings')
+          expect(email.text).to.contain('/manage/groups/group-123/settings')
+        })
+
+        it('should build inactive-domain-capture email including support contact', function (ctx) {
+          const email = ctx.EmailBuilder.buildEmail(
+            'groupDomainCapturedByGroupChanged',
+            {
+              to: 'admin@example.com',
+              groupId: 'group-123',
+              domainCapturedByGroup: false,
+              domain: 'example.com',
+            }
+          )
+
+          expect(email.subject).to.equal(
+            'Domain capture now inactive for example.com'
+          )
+          expect(email.html).to.contain(
+            'Domain capture is inactive for example.com'
+          )
+          expect(email.html).to.contain('admin@overleaf.test')
+          expect(email.text).to.contain('admin@overleaf.test')
         })
       })
     })

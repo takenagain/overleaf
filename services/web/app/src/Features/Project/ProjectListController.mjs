@@ -202,7 +202,14 @@ async function projectListPage(req, res, next) {
   let role
 
   if (isSaas) {
-    if (user.isAdmin) await _checkForOldDebugProjects(userId)
+    if (user.isAdmin) {
+      await _checkForOldDebugProjects(userId).catch(err => {
+        logger.warn(
+          { err, userId },
+          'failed to check old debug projects/managing notifications'
+        )
+      })
+    }
 
     await SplitTestSessionHandler.promises.sessionMaintenance(req, user)
 
@@ -266,8 +273,8 @@ async function projectListPage(req, res, next) {
 
     customerIoEnabled = true
 
-    AnalyticsManager.setUserPropertyForUserInBackground(
-      userId,
+    AnalyticsManager.setUserPropertyForSessionInBackground(
+      req.session,
       'customer-io-integration',
       true
     )
@@ -494,8 +501,13 @@ async function projectListPage(req, res, next) {
   let showInrGeoBanner = false
   let showLATAMBanner = false
   let recommendedCurrency
-  const { countryCode, currencyCode } =
-    await GeoIpLookup.promises.getCurrencyCode(req.ip)
+  let countryCode
+  let currencyCode
+  if (isSaas) {
+    const currencyData = await GeoIpLookup.promises.getCurrencyCode(req.ip)
+    countryCode = currencyData.countryCode
+    currencyCode = currencyData.currencyCode
+  }
 
   if (
     usersBestSubscription?.type === 'free' ||

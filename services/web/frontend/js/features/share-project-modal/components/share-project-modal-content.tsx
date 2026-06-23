@@ -14,6 +14,7 @@ import OLNotification from '@/shared/components/ol/ol-notification'
 import OLButton from '@/shared/components/ol/ol-button'
 import OLSpinner from '@/shared/components/ol/ol-spinner'
 import MaterialIcon from '@/shared/components/material-icon'
+import CopySharingLinkButton from '@/features/share-project-modal/components/copy-sharing-link-button'
 import ErrorMessage from '@/features/share-project-modal/components/error-message'
 import GiveFeedbackLink from '@/features/share-project-modal/components/give-feedback-link'
 import classNames from 'classnames'
@@ -33,6 +34,7 @@ const ShareModalBody = lazy(() => import('./share-modal-body'))
 
 type ShareProjectModalContentProps = {
   cancel: () => void
+  onShow: () => void
   show: boolean
   animation: boolean
   inFlight: boolean
@@ -42,6 +44,7 @@ type ShareProjectModalContentProps = {
 
 export default function ShareProjectModalContent({
   show,
+  onShow,
   cancel,
   animation,
   inFlight,
@@ -49,7 +52,7 @@ export default function ShareProjectModalContent({
   projectName,
 }: ShareProjectModalContentProps) {
   return (
-    <OLModal show={show} onHide={cancel} animation={animation}>
+    <OLModal show={show} onShow={onShow} onHide={cancel} animation={animation}>
       <ShareProjectModalContentInnerWithErrorBoundary
         inFlight={inFlight}
         error={error}
@@ -72,7 +75,7 @@ function ShareProjectModalContentInner({
   const { t } = useTranslation()
   const isSharingUpdatesEnabled = useFeatureFlag('sharing-updates')
   const [isInvitedPeopleScreen, setIsInvitedPeopleScreen] = useState(false)
-  const { successActionMessage } = useShareProjectContext()
+  const { successActionMessage, projectAccess } = useShareProjectContext()
   const { isRestrictedTokenMember, isProjectOwner } = useEditorContext()
 
   return (
@@ -133,6 +136,13 @@ function ShareProjectModalContentInner({
         <div className="d-flex flex-grow-1 flex-wrap gap-2">
           {isSharingUpdatesEnabled ? (
             <>
+              {!isInvitedPeopleScreen &&
+                projectAccess &&
+                (projectAccess === 'onlyInvitedPeople' ||
+                  projectAccess.startsWith('anyoneInXyzWithTheLink') ||
+                  projectAccess === 'anyoneWithTheLink') && (
+                  <CopySharingLinkButton />
+                )}
               {successActionMessage && (
                 <div className="ms-auto px-3 align-self-center">
                   <div

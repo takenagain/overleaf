@@ -91,6 +91,7 @@ const LATEX_TO_DOCUMENT_CASES = [
       '--to',
       'html',
       '--standalone',
+      '--mathml',
       '--resource-path=..',
       '--extract-media=.',
     ],
@@ -431,6 +432,12 @@ describe('ConversionManager', function () {
           expect(ctx.CommandRunner.promises.run.firstCall.args[7]).toBe(
             'output-uuid'
           )
+        })
+
+        it('should run the conversion and set the TEXINPUTS environment variable', function (ctx) {
+          expect(
+            ctx.CommandRunner.promises.run.firstCall.args[5]
+          ).toMatchObject({ TEXINPUTS: '..:' })
         })
 
         it('should run pandoc then zip the subdirectory and return the zip path', function (ctx) {

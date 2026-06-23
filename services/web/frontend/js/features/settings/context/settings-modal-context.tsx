@@ -36,6 +36,8 @@ import type {
   SettingsSection,
   SettingsSectionHook,
 } from '@/features/settings/context/types'
+import EditorTabsSetting from '../components/editor-settings/editor-tabs-setting'
+import FloatingMenuSetting from '../components/editor-settings/floating-menu-setting'
 
 const [referenceSearchSettingModule] = importOverleafModules(
   'referenceSearchSetting'
@@ -74,13 +76,14 @@ export const SettingsModalProvider: FC<React.PropsWithChildren> = ({
 }) => {
   const { t } = useTranslation()
   const { isOverleaf } = getMeta('ol-ExposedSettings')
-  const { overallTheme } = useProjectSettingsContext()
+  const { overallTheme, floatingMenu } = useProjectSettingsContext()
 
   // TODO ide-redesign-cleanup: Rename this field and move it directly into this context
   const { leftMenuShown, setLeftMenuShown } = useLayoutContext()
 
   const hasEmailNotifications = useFeatureFlag('email-notifications')
   const hasEditorTabs = useFeatureFlag('editor-tabs')
+  const hasToolbarMigration = useFeatureFlag('writefull-toolbar-migration')
 
   const editorTabExtraSections = useSlotSections(editorTabExtraSectionHooks)
   const spellcheckExtraSections = useSlotSections(spellcheckExtraSectionHooks)
@@ -112,6 +115,11 @@ export const SettingsModalProvider: FC<React.PropsWithChildren> = ({
                 component: <CodeCheckSetting />,
               },
               {
+                key: 'editorTabs',
+                component: <EditorTabsSetting />,
+                hidden: !hasEditorTabs,
+              },
+              {
                 key: 'previewTabs',
                 component: <PreviewTabsSetting />,
                 hidden: !hasEditorTabs,
@@ -128,6 +136,11 @@ export const SettingsModalProvider: FC<React.PropsWithChildren> = ({
                 key: 'write-and-cite-settings',
                 component: <ReferenceSearchSetting />,
                 hidden: !ReferenceSearchSetting,
+              },
+              {
+                key: 'floating-menu',
+                component: <FloatingMenuSetting />,
+                hidden: !hasToolbarMigration && floatingMenu,
               },
             ],
           },
@@ -284,6 +297,8 @@ export const SettingsModalProvider: FC<React.PropsWithChildren> = ({
       isOverleaf,
       editorTabExtraSections,
       spellcheckExtraSections,
+      hasToolbarMigration,
+      floatingMenu,
     ]
   )
 

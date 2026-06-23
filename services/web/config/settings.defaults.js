@@ -232,6 +232,9 @@ module.exports = {
         '127.0.0.1'
       }:3003`,
     },
+    geoIpLookup: {
+      cacheSize: intFromEnv('GEO_IP_LOOKUP_CACHE_SIZE', 10_000),
+    },
     docstore: {
       url: `http://${process.env.DOCSTORE_HOST || '127.0.0.1'}:3016`,
       pubUrl: `http://${process.env.DOCSTORE_HOST || '127.0.0.1'}:3016`,
@@ -1027,7 +1030,7 @@ module.exports = {
     tprFileViewNotOriginalImporter: [],
     contactUsModal: [],
     sourceEditorExtensions: [],
-    sourceEditorMarkdownExtensions: [],
+    sourceEditorVisualExtensions: [],
     sourceEditorComponents: [],
     pdfLogEntryHeaderActionComponents: [],
     pdfLogEntryComponents: [],
@@ -1036,11 +1039,14 @@ module.exports = {
     diagnosticActions: [],
     sourceEditorCompletionSources: [],
     sourceEditorSymbolPalette: [],
+    sourceEditorToolbarStartButtons: [],
+    sourceEditorToolbarButtonGroups: [],
     sourceEditorToolbarComponents: [],
     sourceEditorToolbarEndButtons: [],
     rootContextProviders: [],
     mainEditorLayoutModals: [],
     mainEditorLayoutPanels: [],
+    pythonRunner: [],
     langFeedbackLinkingWidgets: [],
     labsExperiments: [],
     integrationLinkingWidgets: [],
@@ -1050,6 +1056,7 @@ module.exports = {
     editorLeftMenuSync: [],
     editorLeftMenuManageTemplate: [],
     menubarExtraComponents: [],
+    insertMenuSections: [],
     oauth2Server: [],
     managedGroupSubscriptionEnrollmentNotification: [],
     managedGroupEnrollmentInvite: [],
@@ -1091,7 +1098,7 @@ module.exports = {
     referenceSearchSetting: [],
     settingsModalEditorTabSections: [],
     settingsModalSpellcheckSections: [],
-    errorLogsComponents: [],
+    editorFloatingMenuActions: [],
     referenceIndices: [],
     railEntries: [],
     railPopovers: [],
@@ -1120,7 +1127,7 @@ module.exports = {
 
   unsupportedBrowsers: {
     ie: '<=11',
-    safari: '<=14',
+    safari: '<15',
     firefox: '<=78',
   },
 

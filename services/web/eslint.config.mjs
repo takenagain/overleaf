@@ -23,6 +23,7 @@ import n from 'eslint-plugin-n'
 import promise from 'eslint-plugin-promise'
 import typescriptEslint from '@typescript-eslint/eslint-plugin'
 import js from '@eslint/js'
+import json from '@eslint/json'
 import prettier from 'eslint-config-prettier/flat'
 import { fixupPluginRules } from '@eslint/compat'
 
@@ -43,6 +44,12 @@ const reactFlatRecommended = {
 import _ from 'lodash'
 import confusingBrowserGlobals from 'confusing-browser-globals'
 
+// Type-aware linting is expensive: setting `parserOptions.project` makes
+// @typescript-eslint build a full TypeScript program from tsconfig.backend.json
+// on every ESLint invocation, even when linting a single file.
+// Set ESLINT_FAST=1 to skip type-aware checks; the full lint still runs in CI.
+const TYPE_AWARE = process.env.ESLINT_FAST !== '1'
+
 export default defineConfig([
   // Declare which file extensions ESLint should consider in this workspace.
   // Replaces the previous `--ext .js,.jsx,.mjs,.ts,.tsx` CLI flag, which is
@@ -51,6 +58,11 @@ export default defineConfig([
     files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
   },
   {
+    // Scope JS/TS-specific config to JS/TS files only so that built-in
+    // rules like `no-irregular-whitespace` aren't applied to JSON files
+    // linted via @eslint/json elsewhere in this config.
+    files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
+
     languageOptions: {
       parser: tsParser,
       // Default to node globals for all backend-style files; the
@@ -302,10 +314,12 @@ export default defineConfig([
     files: ['**/app/src/**/*.{js,mjs}', 'app.{js,mjs}'],
 
     languageOptions: {
-      parserOptions: {
-        tsconfigRootDir: import.meta.dirname,
-        project: './tsconfig.backend.json',
-      },
+      parserOptions: TYPE_AWARE
+        ? {
+            tsconfigRootDir: import.meta.dirname,
+            project: './tsconfig.backend.json',
+          }
+        : {},
     },
 
     rules: {
@@ -357,12 +371,14 @@ export default defineConfig([
         },
       ],
 
-      '@typescript-eslint/no-floating-promises': [
-        'error',
-        {
-          checkThenables: true,
-        },
-      ],
+      '@typescript-eslint/no-floating-promises': TYPE_AWARE
+        ? [
+            'error',
+            {
+              checkThenables: true,
+            },
+          ]
+        : 'off',
     },
   },
   {
@@ -935,6 +951,27 @@ export default defineConfig([
   // preceding configs (eslint:recommended, @typescript-eslint, react,
   // jsx-a11y, ...).
   prettier,
+  {
+    // Lint locale JSON files for typographic and i18n conventions.
+    files: ['locales/*.json'],
+    language: 'json/json',
+    plugins: { json, '@overleaf': overleaf },
+    rules: {
+      '@overleaf/no-consecutive-spaces-in-locales': 'error',
+      '@overleaf/no-straight-apostrophes-in-locales': 'error',
+      '@overleaf/sorted-keys-in-locales': 'error',
+      '@overleaf/locale-variables-match-en': 'error',
+      '@overleaf/no-orphan-locale-keys': 'error',
+    },
+  },
+  {
+    files: ['locales/fr.json'],
+    language: 'json/json',
+    plugins: { json, '@overleaf': overleaf },
+    rules: {
+      '@overleaf/french-typography-in-locales': 'error',
+    },
+  },
   globalIgnores([
     '**/data/',
     'scripts/translations/.cache/',
