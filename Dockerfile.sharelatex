@@ -31,7 +31,7 @@ RUN set -eux; \
   grep -q "VALIDSIG ${TEXLIVE_SIGNING_SUBKEY_FPR}" /tmp/texlive-gpg-status.log; \
   TLMGR_SCRIPT="$(awk '{print $2}' update-tlmgr-latest.sh.sha512)"; \
   case "${TLMGR_SCRIPT}" in \
-    update-tlmgr-r*.sh) ;; \
+    update-tlmgr-r*.sh|update-tlmgr-latest.sh) ;; \
     *) echo "Unexpected update script name: ${TLMGR_SCRIPT}"; exit 1 ;; \
   esac; \
   curl -fsSLo "${TLMGR_SCRIPT}" "${TLNET_URL}/${TLMGR_SCRIPT}"; \
