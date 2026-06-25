@@ -496,6 +496,7 @@ const _ProjectController = {
       'markdown-visual',
       'ai-disabled-collaborators',
       'group-link-sharing',
+      'compile-with-checkpoint',
     ].filter(Boolean)
 
     const getUserValues = async userId =>
@@ -647,7 +648,11 @@ const _ProjectController = {
         req,
         projectId
       )
-      const imageNames = await ProjectHelper.getAllowedImagesForUser(user)
+      const imageNames = await ProjectHelper.getAllowedImagesForUser(
+        req,
+        res,
+        user
+      )
 
       const privilegeLevel =
         await AuthorizationManager.promises.getPrivilegeLevelForProject(
