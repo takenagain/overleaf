@@ -1008,6 +1008,51 @@ templates.taxExemptCertificateRequired = NoCTAEmailTemplate({
   },
 })
 
+function taxIdInvalidTemplate({ noun, descriptor }) {
+  return ctaTemplate({
+    subject() {
+      return `Action required: Update your ${noun} on ${settings.appName}`
+    },
+    title() {
+      return `Action required: Update your ${noun}`
+    },
+    greeting() {
+      return 'Hi,'
+    },
+    message() {
+      return [
+        `We're writing to let you know that the ${descriptor} you entered did not validate successfully.`,
+        `Please update your ${noun} on your billing information page:`,
+      ]
+    },
+    secondaryMessage() {
+      return [
+        `If you do not update your ${noun}, your next invoice may be subject to additional taxes.`,
+        'If you require a new invoice, please let us know by replying to this email.',
+      ]
+    },
+    ctaText() {
+      return `Update ${noun}`
+    },
+    ctaURL() {
+      return `${settings.siteUrl}/user/subscription`
+    },
+    footerMessage(opts) {
+      return `Our reference: ${opts.stripeCustomerId}`
+    },
+  })
+}
+
+templates.taxIdInvalidVat = taxIdInvalidTemplate({
+  noun: 'VAT number',
+  descriptor: 'VAT number',
+})
+
+templates.taxIdInvalidNonVat = taxIdInvalidTemplate({
+  noun: 'tax ID',
+  descriptor: 'tax identifier',
+})
+
 templates.groupMemberLimitWarning = ctaTemplate({
   subject(opts) {
     return `Action needed: Your Overleaf group is nearly out of licenses`
@@ -1067,6 +1112,35 @@ templates.groupDomainCapturedByGroupChanged = ctaTemplate({
   },
   ctaURL(opts) {
     return `${settings.siteUrl}/manage/groups/${opts.groupId}/settings`
+  },
+})
+
+templates.domainVerifiedForGroup = NoCTAEmailTemplate({
+  subject(opts) {
+    if (opts.capturedByGroup) {
+      return `Your domain is verified`
+    } else {
+      return 'Your domain is verified — ready to capture?'
+    }
+  },
+  message(opts, isPlainText) {
+    const message = [
+      `We've verified <b>${_.escape(opts.domain)}</b> for your Overleaf group.`,
+    ]
+
+    if (opts.capturedByGroup) {
+      message.push(`Your group will continue capturing users with this domain.`)
+    } else {
+      message.push(
+        `To complete the capture, reply to this email and we'll take it from there.`,
+        `Once captured, existing Overleaf users with a <b>${_.escape(opts.domain)}</b> address will be invited to join your group. Until they accept, they won't be able to access Overleaf. New users who sign up with <b>${_.escape(opts.domain)}</b> will be added to your group automatically.`,
+        `You'll receive a confirmation email once the capture is active.`
+      )
+    }
+
+    return message.map(m => {
+      return EmailMessageHelper.cleanHTML(m, isPlainText)
+    })
   },
 })
 
