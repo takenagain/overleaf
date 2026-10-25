@@ -5,7 +5,7 @@ RUN set -eux; \
   TLROOT=/usr/local/texlive; \
   TLSRC="${TLROOT}/2025"; \
   TLDST="${TLROOT}/2026"; \
-  TLNET_URL="https://mirror.ctan.org/systems/texlive/tlnet"; \
+  TLNET_URL="https://mirror.ox.ac.uk/sites/ctan.org/systems/texlive/tlnet"; \
   TEXLIVE_SIGNING_SUBKEY_FPR="D8F2F86057A857E42A88106A4CE1877E19438C70"; \
   if [ ! -d "${TLSRC}" ]; then \
     echo "Expected TeX Live source install at ${TLSRC}, but it was not found."; \
