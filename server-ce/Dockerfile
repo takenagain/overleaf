@@ -35,7 +35,7 @@ RUN --mount=type=cache,target=/root/.cache \
     --mount=type=cache,target=/usr/local/share/.cache/yarn,id=server-ce-yarn-fallback-cache \
     --mount=type=cache,target=/overleaf/services/web/.cache,id=server-ce-webpack-cache \
     --mount=type=tmpfs,target=/tmp \
-    node genScript compile | bash
+    node genScript compile | bash || { status=$?; find /tmp -name pack.log -exec cat {} \;; exit "$status"; }
 
 
 # Copy runit service startup scripts to its location
