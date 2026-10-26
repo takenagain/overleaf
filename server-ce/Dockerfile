@@ -17,7 +17,10 @@ COPY server-ce/genScript.js server-ce/services.js /overleaf/
 # -------------------------------------------------------------------------
 # Corepack setup, shared between all the images.
 ENV COREPACK_HOME=/opt/corepack
-RUN npm install -g corepack@0.36.0 && corepack enable && corepack install -g yarn@4.18.1
+# Git dependencies with v1 lockfiles bootstrap through Yarn Classic. Its cache
+# needs a process mutex when Yarn 4 builds multiple Git dependencies in parallel.
+RUN npm install -g corepack@0.36.0 && corepack enable && corepack install -g yarn@4.18.1 \
+    && printf '%s\n' '--mutex "file:/tmp/overleaf-yarn-classic.lock"' > /root/.yarnrc
 ENV COREPACK_ENABLE_NETWORK=0
 
 # Install yarn dependencies
