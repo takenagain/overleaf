@@ -1,4 +1,4 @@
-import chai from 'chai'
+import * as chai from 'chai'
 import fs from 'node:fs'
 import Stream from 'node:stream'
 import Settings from '@overleaf/settings'

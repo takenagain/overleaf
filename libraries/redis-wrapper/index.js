@@ -5,7 +5,7 @@ const os = require('node:os')
 const { promisify } = require('node:util')
 
 // @ts-ignore - ioredis types may not be available in all contexts
-const Redis = require('ioredis')
+const Redis = require('ioredis').default
 
 const {
   RedisHealthCheckTimedOut,
@@ -209,7 +209,7 @@ async function runWithTimeout({ runner, timeout, context }) {
 /**
  * Delete all data from the test Redis instance
  *
- * @param {Redis} rclient
+ * @param {import('ioredis').Redis} rclient
  */
 async function cleanupTestRedis(rclient) {
   ensureTestRedis(rclient)
@@ -221,7 +221,7 @@ async function cleanupTestRedis(rclient) {
  *
  * In tests, the Redis instance is on a host called redis_test
  *
- * @param {Redis} rclient
+ * @param {import('ioredis').Redis} rclient
  */
 function ensureTestRedis(rclient) {
   const host = rclient.options.host
@@ -233,7 +233,53 @@ function ensureTestRedis(rclient) {
   }
 }
 
+/**
+ * Adapt ioredis to the node-redis promise API used by connect-redis.
+ * @param {any} client
+ */
+function createSessionStoreClient(client) {
+  return {
+    get: (/** @type {string} */ key) => client.get(key),
+    mGet: (/** @type {string[]} */ keys) => client.mget(keys),
+    del: (/** @type {string[]} */ keys) => client.del(keys),
+    expire: (/** @type {string} */ key, /** @type {number} */ ttl) =>
+      client.expire(key, ttl),
+    set(
+      /** @type {string} */ key,
+      /** @type {string} */ value,
+      /** @type {{expiration?: {type: string, value: number}, condition?: string}} */ options = {}
+    ) {
+      /** @type {Array<string | number>} */
+      const args = [key, value]
+      if (options.expiration) {
+        args.push(options.expiration.type, options.expiration.value)
+      }
+      if (options.condition) args.push(options.condition)
+      return client.set(...args)
+    },
+    async *scanIterator(/** @type {{MATCH: string, COUNT: number}} */ options) {
+      const nodes =
+        typeof client.nodes === 'function' ? client.nodes('master') : [client]
+      for (const node of nodes) {
+        let cursor = '0'
+        do {
+          const result = await node.scan(
+            cursor,
+            'MATCH',
+            options.MATCH,
+            'COUNT',
+            options.COUNT
+          )
+          cursor = result[0]
+          yield result[1]
+        } while (cursor !== '0')
+      }
+    },
+  }
+}
+
 module.exports = {
   createClient,
   cleanupTestRedis,
+  createSessionStoreClient,
 }

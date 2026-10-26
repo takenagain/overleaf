@@ -1,5 +1,9 @@
 import _ from 'lodash'
-import AlgoliaSearch from 'algoliasearch'
+import {
+  algoliasearch,
+  type SearchClient,
+  type SearchParamsObject,
+} from 'algoliasearch'
 import getMeta from '../../utils/meta'
 
 interface WikiHit {
@@ -30,24 +34,33 @@ interface AlgoliaSearchResponse {
   nbPages: number
 }
 
-let wikiIdx: AlgoliaSearch.Index | undefined
+let wikiClient: SearchClient | undefined
+let wikiIndexName: string | undefined
 
 export async function searchWiki(
   query: string,
-  options?: AlgoliaSearch.QueryParameters
+  options?: SearchParamsObject
 ): Promise<AlgoliaSearchResponse> {
-  if (!wikiIdx) {
+  if (!wikiClient) {
     const algoliaConfig = getMeta('ol-algolia')
     const wikiIndex = _.get(algoliaConfig, 'indexes.wiki')
     if (wikiIndex && algoliaConfig) {
-      const client = AlgoliaSearch(algoliaConfig.appId, algoliaConfig.apiKey)
-      wikiIdx = client.initIndex(wikiIndex)
+      wikiClient = algoliasearch(algoliaConfig.appId, algoliaConfig.apiKey)
+      wikiIndexName = wikiIndex
     }
   }
-  if (!wikiIdx) {
+  if (!wikiClient || !wikiIndexName) {
     return { hits: [], nbHits: 0, nbPages: 0 }
   }
-  return wikiIdx.search({ query, ...options }) as Promise<AlgoliaSearchResponse>
+  const result = await wikiClient.searchSingleIndex<WikiHit>({
+    indexName: wikiIndexName,
+    searchParams: { query, ...options },
+  })
+  return {
+    hits: result.hits,
+    nbHits: result.nbHits ?? result.hits.length,
+    nbPages: result.nbPages ?? 0,
+  }
 }
 
 export function formatWikiHit(hit: WikiHit): FormattedWikiHit {

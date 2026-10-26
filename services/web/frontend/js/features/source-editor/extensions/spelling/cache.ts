@@ -1,5 +1,5 @@
 import { StateField, StateEffect } from '@codemirror/state'
-import LRU from 'lru-cache'
+import { LRUCache as LRU } from 'lru-cache'
 import { Word } from './spellchecker'
 const CACHE_MAX = 15000
 

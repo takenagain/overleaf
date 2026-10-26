@@ -263,7 +263,7 @@ export const ChatContext = createContext<
 export const ChatProvider: FC<React.PropsWithChildren> = ({ children }) => {
   const chatEnabled = getMeta('ol-capabilities')?.includes('chat')
 
-  const clientId = useRef<string>()
+  const clientId = useRef<string>(undefined)
   if (clientId.current === undefined) {
     clientId.current = clientIdGenerator.get()
   }

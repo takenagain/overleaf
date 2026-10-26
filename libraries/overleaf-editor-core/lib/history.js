@@ -1,7 +1,7 @@
 'use strict'
 
 const assert = require('check-types').assert
-const pMap = require('p-map')
+const pMap = require('p-map').default
 
 const Change = require('./change')
 const Snapshot = require('./snapshot')

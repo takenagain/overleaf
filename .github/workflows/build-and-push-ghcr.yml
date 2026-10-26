@@ -2,50 +2,241 @@ name: Build and Push ShareLaTeX Image
 
 on:
   push:
-    branches:
-      - main
-      - staging
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+    branches: [main, staging]
+  workflow_dispatch:
 
 permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: ghcr-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build-and-push:
+  base:
+    outputs:
+      image: ${{ steps.image.outputs.name }}/base@${{ steps.build.outputs.digest }}
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Prepare image name and runner disk
+        id: image
+        shell: bash
+        run: |
+          echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+          sudo rm -rf /usr/local/lib/android /opt/ghc /usr/share/dotnet
+          df -h /
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build native base image
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: server-ce/Dockerfile-base
+          push: true
+          pull: true
+          tags: ${{ steps.image.outputs.name }}/base:${{ github.sha }}
+          cache-from: type=gha,scope=overleaf-base
+          cache-to: type=gha,mode=max,scope=overleaf-base
+
+  source:
+    needs: base
+    outputs:
+      image: ${{ steps.image.outputs.name }}/source@${{ steps.build.outputs.digest }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Prepare image name and runner disk
+        id: image
+        shell: bash
+        run: |
+          echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+          sudo rm -rf /usr/local/lib/android /opt/ghc /usr/share/dotnet
+          df -h /
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to GHCR
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build checked-out application source
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: server-ce/Dockerfile
+          build-args: |
+            OVERLEAF_BASE_TAG=${{ needs.base.outputs.image }}
+          push: true
+          tags: ${{ steps.image.outputs.name }}/source:${{ github.sha }}
+          labels: org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=overleaf-source
+          cache-to: type=gha,mode=max,scope=overleaf-source
+
+  build-and-push:
+    needs: source
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Prepare image name and runner disk
+        id: image
+        shell: bash
+        run: |
+          echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+          sudo rm -rf /usr/local/lib/android /opt/ghc /usr/share/dotnet
+          df -h /
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to GHCR
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract image metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ steps.image.outputs.name }}
           tags: |
             type=sha
             type=raw,value=latest,enable=${{ github.ref_name == 'main' }}
             type=raw,value=staging,enable=${{ github.ref_name == 'staging' }}
 
-      - name: Build and push
-        uses: docker/build-push-action@v6
+      - name: Build TeX package additions
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: Dockerfile.sharelatex
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            OVERLEAF_SOURCE_IMAGE=${{ needs.source.outputs.image }}
+          load: true
+          tags: overleaf-smoke:${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=overleaf-final
+          cache-to: type=gha,mode=min,scope=overleaf-final
+
+      - name: Verify source, runtime, and TeX packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="overleaf-smoke:${{ github.sha }}"
+          expected=$(sha256sum services/web/package.json | cut -d ' ' -f 1)
+          actual=$(docker run --rm --entrypoint sha256sum "$image" /overleaf/services/web/package.json | cut -d ' ' -f 1)
+          test "$actual" = "$expected"
+          docker run --rm --entrypoint node "$image" -e 'if (Number(process.versions.node.split(".")[0]) !== 26) process.exit(1)'
+          docker run --rm --entrypoint /bin/bash "$image" -ec '
+            tlmgr --version | grep "TeX Live.*2026"
+            tlmgr info --only-installed collection-latexextra | grep "installed:.*Yes"
+            kpsewhich algorithm2e.sty
+          '
+
+          network="overleaf-smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          mongo="$network-mongo"
+          redis="$network-redis"
+          app="$network-app"
+          smoke_dir=$(mktemp -d)
+          cleanup() {
+            result=$?
+            if (( result != 0 )); then
+              docker logs --tail 80 "$mongo" || true
+              docker logs --tail 80 "$redis" || true
+              docker logs --tail 80 "$app" || true
+              docker exec "$app" bash -c 'sv status /etc/service/*; tail -n 60 /var/log/overleaf/*.log' || true
+            fi
+            docker rm -f -v "$app" "$mongo" "$redis" >/dev/null 2>&1 || true
+            docker network rm "$network" >/dev/null 2>&1 || true
+            rm -rf "$smoke_dir"
+            return "$result"
+          }
+          trap cleanup EXIT
+          docker network create "$network"
+          docker run -d --name "$mongo" --network "$network" --network-alias mongo \
+            mongo:9.0.4 --replSet overleaf-smoke --bind_ip_all
+          docker run -d --name "$redis" --network "$network" --network-alias redis \
+            redis:8.8.3-trixie
+          for _ in {1..30}; do
+            if docker exec "$mongo" mongosh --quiet --eval 'db.adminCommand({ping: 1}).ok' >/dev/null 2>&1; then
+              break
+            fi
+            sleep 2
+          done
+          docker exec "$mongo" mongosh --quiet --eval \
+            'rs.initiate({_id: "overleaf-smoke", members: [{_id: 0, host: "mongo:27017"}]})'
+          for _ in {1..30}; do
+            if docker exec "$mongo" mongosh --quiet --eval \
+              'if (!db.hello().isWritablePrimary) quit(1)' >/dev/null 2>&1; then
+              break
+            fi
+            sleep 2
+          done
+          docker exec "$mongo" mongosh --quiet --eval 'if (!db.hello().isWritablePrimary) quit(1)'
+          docker run -d --name "$app" --network "$network" -p 127.0.0.1:18080:80 \
+            -e 'OVERLEAF_MONGO_URL=mongodb://mongo/sharelatex?replicaSet=overleaf-smoke' \
+            -e OVERLEAF_REDIS_HOST=redis -e REDIS_HOST=redis \
+            -e OVERLEAF_SITE_URL=http://127.0.0.1:18080 \
+            -e OVERLEAF_INVITE_TOKEN_SECRET=ci-disposable-invite-secret \
+            -e OVERLEAF_SESSION_SECRET=ci-disposable-session-secret \
+            "$image"
+          ready=false
+          deadline=$((SECONDS + 300))
+          while (( SECONDS < deadline )); do
+            # Require every application daemon to survive startup for 15 seconds.
+            if [[ "$(curl --max-time 5 --silent --output "$smoke_dir/login.html" --write-out '%{http_code}' http://127.0.0.1:18080/login)" == 200 ]] \
+              && grep -q 'name="loginForm"' "$smoke_dir/login.html" \
+              && docker exec "$app" bash -ec '
+                for service in chat clsi docstore document-updater filestore history-v1 notifications project-history real-time web-api web; do
+                  sv status "/etc/service/$service-overleaf"
+                done
+                sv status /etc/service/nginx
+              ' > "$smoke_dir/services" \
+              && awk '$1 != "run:" || $NF !~ /^[0-9]+s$/ || int($NF) < 15 { bad=1 } END { exit bad }' "$smoke_dir/services"; then
+              ready=true
+              break
+            fi
+            sleep 2
+          done
+          test "$ready" = true
+          grep -q 'name="email"' "$smoke_dir/login.html"
+          grep -q 'name="password"' "$smoke_dir/login.html"
+          cat "$smoke_dir/services"
+
+      - name: Publish verified image
+        env:
+          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+        shell: bash
+        run: |
+          while IFS= read -r tag; do
+            test -n "$tag" || continue
+            docker tag "overleaf-smoke:${{ github.sha }}" "$tag"
+            docker push "$tag"
+          done <<< "$IMAGE_TAGS"

@@ -1,4 +1,4 @@
-import archiver from 'archiver'
+import { ZipArchive } from 'archiver'
 import OutputCacheManager from './OutputCacheManager.js'
 import OutputFileFinder from './OutputFileFinder.js'
 import Settings from '@overleaf/settings'
@@ -33,7 +33,7 @@ export default {
       build
     )
 
-    const archive = archiver('zip')
+    const archive = new ZipArchive()
 
     archive.on('error', err => {
       logger.warn(

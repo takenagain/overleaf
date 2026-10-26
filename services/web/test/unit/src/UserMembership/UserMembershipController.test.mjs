@@ -750,7 +750,7 @@ describe('UserMembershipController', () => {
     it('should name the exported csv file', ({ res }) => {
       expect(res.header).toHaveBeenCalledWith(
         'Content-Disposition',
-        'attachment; filename="Group.csv"'
+        'attachment; filename=Group.csv'
       )
     })
 

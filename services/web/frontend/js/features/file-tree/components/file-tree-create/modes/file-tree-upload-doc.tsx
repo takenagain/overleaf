@@ -2,12 +2,12 @@ import { useTranslation } from 'react-i18next'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Uppy from '@uppy/core'
 import XHRUpload from '@uppy/xhr-upload'
-import { Dashboard } from '@uppy/react'
+import Dashboard from '@uppy/react/dashboard'
 import { useFileTreeActionable } from '../../../contexts/file-tree-actionable'
 import { useProjectContext } from '../../../../../shared/context/project-context'
 import * as eventTracking from '../../../../../infrastructure/event-tracking'
-import '@uppy/core/dist/style.css'
-import '@uppy/dashboard/dist/style.css'
+import '@uppy/core/css/style.css'
+import '@uppy/dashboard/css/style.css'
 import { refreshProjectMetadata } from '../../../util/api'
 import ErrorMessage from '../error-message'
 import { debugConsole } from '@/utils/debugging'
@@ -133,7 +133,10 @@ export default function FileTreeUploadDoc() {
     const endpoint = buildEndpoint(projectId, parentFolderId)
 
     return (
-      new Uppy<{ relativePath?: string; targetFolderId: string }>({
+      new Uppy<
+        { relativePath?: string; targetFolderId: string },
+        { entity_type?: string; entity_id?: string; error?: string }
+      >({
         // logger: Uppy.debugLogger,
         allowMultipleUploadBatches: false,
         restrictions: {
@@ -159,6 +162,7 @@ export default function FileTreeUploadDoc() {
         },
         autoProceed: true,
         locale: {
+          pluralize: count => (count === 1 ? 0 : 1),
           strings: {
             youCanOnlyUploadX:
               'You can only upload %{smart_count} files at a time',
@@ -177,7 +181,7 @@ export default function FileTreeUploadDoc() {
         })
         // close the modal when all the uploads completed successfully
         .on('complete', result => {
-          if (!result.failed.length) {
+          if (result.successful?.length && !result.failed?.length) {
             cancel()
           }
         })
@@ -190,9 +194,10 @@ export default function FileTreeUploadDoc() {
                 ? file?.name.split('.').pop()
                 : '',
           })
-          if (response.body.entity_type === 'doc') {
+          const body = response.body
+          if (body?.entity_type === 'doc' && body.entity_id) {
             window.setTimeout(() => {
-              refreshProjectMetadata(projectId, response.body.entity_id)
+              refreshProjectMetadata(projectId, body.entity_id!)
             }, 250)
           }
         })
@@ -307,7 +312,7 @@ export default function FileTreeUploadDoc() {
         <div ref={dashboardRef}>
           <Dashboard
             uppy={uppy}
-            showProgressDetails
+            hideProgressDetails={false}
             // note={`Up to ${maxNumberOfFiles} files, up to ${maxFileSize / (1024 * 1024)}MB`}
             height={400}
             width="100%"

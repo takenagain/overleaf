@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Dashboard } from '@uppy/react'
+import Dashboard from '@uppy/react/dashboard'
 import { Trans, useTranslation } from 'react-i18next'
 import { useProjectUploader } from '../../hooks/use-project-uploader'
 import {
@@ -10,8 +10,8 @@ import {
   OLModalTitle,
 } from '@/shared/components/ol/ol-modal'
 import OLButton from '@/shared/components/ol/ol-button'
-import '@uppy/core/dist/style.css'
-import '@uppy/dashboard/dist/style.css'
+import '@uppy/core/css/style.css'
+import '@uppy/dashboard/css/style.css'
 import Notification from '@/shared/components/notification'
 import { useFeatureFlag } from '@/shared/context/split-test-context'
 import { useActiveOverallTheme } from '@/shared/hooks/use-active-overall-theme'

@@ -3,8 +3,8 @@
 const { expect } = require('chai')
 const fs = require('node:fs')
 const { Readable } = require('node:stream')
-const HTTPStatus = require('http-status')
-const fetch = require('node-fetch')
+const HTTPStatus = require('http-status').default
+const fetch = require('node-fetch').default
 const sinon = require('sinon')
 
 const cleanup = require('../storage/support/cleanup')

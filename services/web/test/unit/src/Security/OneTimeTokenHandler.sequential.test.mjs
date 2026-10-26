@@ -26,7 +26,9 @@ describe('OneTimeTokenHandler', function () {
   beforeEach(cleanupTestDatabase)
 
   beforeEach(function (ctx) {
-    ctx.clock = sinon.useFakeTimers()
+    ctx.clock = sinon.useFakeTimers({
+      toNotFake: ['nextTick', 'queueMicrotask'],
+    })
   })
 
   afterEach(function (ctx) {

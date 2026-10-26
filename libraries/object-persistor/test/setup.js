@@ -2,8 +2,8 @@ const SandboxedModule = require('sandboxed-module')
 const chai = require('chai')
 const sinon = require('sinon')
 
-chai.use(require('sinon-chai'))
-chai.use(require('chai-as-promised'))
+chai.use(require('sinon-chai').default)
+chai.use(require('chai-as-promised').default)
 
 SandboxedModule.configure({
   requires: {

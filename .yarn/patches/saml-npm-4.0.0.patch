@@ -1,0 +1,24 @@
+diff --git a/lib/utils.js b/lib/utils.js
+--- a/lib/utils.js
++++ b/lib/utils.js
+@@ -69,7 +69,7 @@
+  */
+ exports.factoryForNode = function factoryForNode(pathToTemplate) {
+   const template = fs.readFileSync(pathToTemplate);
+-  const prototypeDoc = new Parser().parseFromString(template.toString());
++  const prototypeDoc = new Parser().parseFromString(template.toString(), "application/xml");
+ 
+   return function () {
+     return prototypeDoc.cloneNode(true);
+diff --git a/lib/saml11.js b/lib/saml11.js
+--- a/lib/saml11.js
++++ b/lib/saml11.js
+@@ -218,7 +218,7 @@
+     for (var i=0; i<subjectConfirmationNodes.length; i++) {
+       var keyinfoDom;
+       try {
+-        keyinfoDom = new Parser().parseFromString(keyinfo);
++        keyinfoDom = new Parser().parseFromString(keyinfo, "application/xml");
+       } catch(error){
+         return utils.reportError(error, callback);
+       }

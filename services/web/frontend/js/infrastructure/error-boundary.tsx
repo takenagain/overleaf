@@ -5,8 +5,8 @@ import {
 } from 'react-error-boundary'
 import { ComponentType, ErrorInfo } from 'react'
 
-function errorHandler(error: Error, errorInfo: ErrorInfo) {
-  captureException(error, {
+function errorHandler(error: unknown, errorInfo: ErrorInfo) {
+  captureException(error instanceof Error ? error : new Error(String(error)), {
     extra: {
       componentStack: errorInfo.componentStack,
     },

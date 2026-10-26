@@ -31,7 +31,10 @@ const plans = {
 
 describe('SubscriptionHelper', function () {
   beforeEach(async function (ctx) {
-    ctx.clock = sinon.useFakeTimers(new Date('2023-06-15T10:00:00Z'))
+    ctx.clock = sinon.useFakeTimers({
+      now: new Date('2023-06-15T10:00:00Z'),
+      toNotFake: ['nextTick', 'queueMicrotask'],
+    })
     ctx.Subscription = {
       findOne: sinon.stub().returns({
         exec: sinon.stub().resolves(),

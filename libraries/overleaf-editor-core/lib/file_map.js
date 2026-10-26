@@ -4,7 +4,7 @@
 const _ = require('lodash')
 const assert = require('check-types').assert
 const OError = require('@overleaf/o-error')
-const pMap = require('p-map')
+const pMap = require('p-map').default
 
 const File = require('./file')
 const safePathname = require('./safe_pathname')

@@ -2,10 +2,10 @@ import { FC, useCallback, useEffect, useState } from 'react'
 import { useFigureModalContext } from '../figure-modal-context'
 import { useCurrentProjectFolders } from '../../../hooks/use-current-project-folders'
 import { File } from '../../../utils/file'
-import { Dashboard } from '@uppy/react'
-import '@uppy/core/dist/style.css'
-import '@uppy/dashboard/dist/style.css'
-import { Uppy, type UppyFile } from '@uppy/core'
+import Dashboard from '@uppy/react/dashboard'
+import '@uppy/core/css/style.css'
+import '@uppy/dashboard/css/style.css'
+import { Uppy, type Meta, type Body, type UppyFile } from '@uppy/core'
 import XHRUpload from '@uppy/xhr-upload'
 import { refreshProjectMetadata } from '../../../../file-tree/util/api'
 import { useProjectContext } from '../../../../../shared/context/project-context'
@@ -40,12 +40,12 @@ export const FigureModalUploadFileSource: FC = () => {
   const [folder, setFolder] = useState<File | null>(null)
   const [nameDirty, setNameDirty] = useState<boolean>(false)
   // Files are immutable, so this will point to a (possibly) old version of the file
-  const [file, setFile] = useState<UppyFile | null>(null)
+  const [file, setFile] = useState<UppyFile<Meta, Body> | null>(null)
   const [name, setName] = useState<string>('')
   const [uploading, setUploading] = useState<boolean>(false)
   const [uploadError, setUploadError] = useState<any>(null)
   const [uppy] = useState(() =>
-    new Uppy({
+    new Uppy<Meta, Body>({
       allowMultipleUploadBatches: false,
       restrictions: {
         maxNumberOfFiles: 1,
@@ -68,7 +68,11 @@ export const FigureModalUploadFileSource: FC = () => {
   const uppyTheme = useActiveOverallTheme('themed-modals')
 
   const dispatchUploadAction = useCallback(
-    (name?: string, file?: UppyFile | null, folder?: File | null) => {
+    (
+      name?: string,
+      file?: UppyFile<Meta, Body> | null,
+      folder?: File | null
+    ) => {
       if (!name || !file) {
         dispatch({ getPath: undefined })
         return
@@ -78,7 +82,10 @@ export const FigureModalUploadFileSource: FC = () => {
           const fileTreeUpdate = waitForFileTreeUpdate(view)
           const uploadResult = await uppy.upload()
           await fileTreeUpdate.withTimeout(500)
-          if (!uploadResult.successful) {
+          if (
+            !uploadResult?.successful?.length ||
+            uploadResult.failed?.length
+          ) {
             throw new Error('Upload failed')
           }
           const uploadFolder = folder ?? rootFile
@@ -95,7 +102,10 @@ export const FigureModalUploadFileSource: FC = () => {
 
   useEffect(() => {
     // broadcast doc metadata after each successful upload
-    const onUploadSuccess = (_file: UppyFile | undefined, response: any) => {
+    const onUploadSuccess = (
+      _file: UppyFile<Meta, Body> | undefined,
+      response: any
+    ) => {
       setUploading(false)
       if (response.body.entity_type === 'doc') {
         window.setTimeout(() => {
@@ -104,7 +114,7 @@ export const FigureModalUploadFileSource: FC = () => {
       }
     }
 
-    const onFileAdded = (file: UppyFile) => {
+    const onFileAdded = (file: UppyFile<Meta, Body>) => {
       const newName = nameDirty ? name : file.name
       setName(newName)
       setFile(file)
@@ -123,6 +133,9 @@ export const FigureModalUploadFileSource: FC = () => {
       // Set endpoint dynamically https://github.com/transloadit/uppy/issues/1790#issuecomment-581402293
       setUploadError(null)
       uppy.getFiles().forEach(file => {
+        if (!(file.data instanceof Blob)) {
+          throw new Error('Upload data is unavailable')
+        }
         uppy.setFileState(file.id, {
           // HACK: There seems to be no other way of renaming the underlying file object
           data: new globalThis.File([file.data], name),
@@ -144,7 +157,7 @@ export const FigureModalUploadFileSource: FC = () => {
 
     // handle upload errors
     const onError = (
-      _file: UppyFile | undefined,
+      _file: UppyFile<Meta, Body> | undefined,
       error: any,
       response: any
     ) => {
@@ -209,7 +222,7 @@ export const FigureModalUploadFileSource: FC = () => {
           {file ? (
             <FileContainer
               name={file.name}
-              size={file.size}
+              size={file.size ?? undefined}
               status={
                 uploading
                   ? FileUploadStatus.UPLOADING
@@ -228,7 +241,7 @@ export const FigureModalUploadFileSource: FC = () => {
           ) : (
             <Dashboard
               uppy={uppy}
-              showProgressDetails
+              hideProgressDetails={false}
               height={120}
               width="100%"
               showLinkToFileUploadResult={false}

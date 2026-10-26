@@ -154,7 +154,9 @@ describe('WebsocketController', function () {
         )
       })
       it('should set the connected time on the client', function (ctx) {
-        return ctx.client.ol_context.connected_time.should.equal(new Date())
+        return ctx.client.ol_context.connected_time.should.deep.equal(
+          new Date()
+        )
       })
       it('should set the project_id on the client', function (ctx) {
         return ctx.client.ol_context.project_id.should.equal(ctx.project_id)

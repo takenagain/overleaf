@@ -29,7 +29,7 @@ describe('ProjectZipStreamManager', function () {
     }
 
     vi.doMock('archiver', () => ({
-      default: (ctx.archiver = sinon.stub().returns(ctx.archive)),
+      ZipArchive: (ctx.archiver = sinon.stub().returns(ctx.archive)),
     }))
 
     vi.doMock('@overleaf/logger', () => ({
@@ -116,7 +116,7 @@ describe('ProjectZipStreamManager', function () {
       })
 
       it('should create a zip archive', function (ctx) {
-        return ctx.archiver.calledWith('zip').should.equal(true)
+        return ctx.archiver.calledWithNew().should.equal(true)
       })
 
       it('should return a stream before any processing is done', function (ctx) {
@@ -199,7 +199,7 @@ describe('ProjectZipStreamManager', function () {
       })
 
       it('should create a zip archive', function (ctx) {
-        ctx.archiver.calledWith('zip').should.equal(true)
+        ctx.archiver.calledWithNew().should.equal(true)
       })
 
       it('should return a stream before any processing is done', function (ctx) {
@@ -258,7 +258,7 @@ describe('ProjectZipStreamManager', function () {
       })
 
       it('should create a zip archive', function (ctx) {
-        return ctx.archiver.calledWith('zip').should.equal(true)
+        return ctx.archiver.calledWithNew().should.equal(true)
       })
 
       it('should return a stream before any processing is done', function (ctx) {

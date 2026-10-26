@@ -44,28 +44,28 @@ describe('FileMap', function () {
 
   it('detects conflicting paths with characters that sort before /', function () {
     const fileMap = makeFileMap(['a', 'a!'])
-    expect(fileMap.wouldConflict('a/b')).to.be.truthy
+    expect(fileMap.wouldConflict('a/b')).to.be.ok
   })
 
   it('detects conflicting paths', function () {
     const fileMap = makeFileMap(['a/b/c'])
-    expect(fileMap.wouldConflict('a/b/c/d')).to.be.truthy
-    expect(fileMap.wouldConflict('a')).to.be.truthy
-    expect(fileMap.wouldConflict('b')).to.be.falsy
-    expect(fileMap.wouldConflict('a/b')).to.be.truthy
-    expect(fileMap.wouldConflict('a/c')).to.be.falsy
-    expect(fileMap.wouldConflict('a/b/c')).to.be.falsy
-    expect(fileMap.wouldConflict('a/b/d')).to.be.falsy
-    expect(fileMap.wouldConflict('d/b/c')).to.be.falsy
+    expect(fileMap.wouldConflict('a/b/c/d')).to.be.ok
+    expect(fileMap.wouldConflict('a')).to.be.ok
+    expect(fileMap.wouldConflict('b')).to.not.be.ok
+    expect(fileMap.wouldConflict('a/b')).to.be.ok
+    expect(fileMap.wouldConflict('a/c')).to.not.be.ok
+    expect(fileMap.wouldConflict('a/b/c')).to.not.be.ok
+    expect(fileMap.wouldConflict('a/b/d')).to.not.be.ok
+    expect(fileMap.wouldConflict('d/b/c')).to.not.be.ok
   })
 
   it('allows paths that differ by case', function () {
     const fileMap = makeFileMap(['a/b/c'])
-    expect(fileMap.wouldConflict('a/b/C')).to.be.falsy
-    expect(fileMap.wouldConflict('A')).to.be.falsy
-    expect(fileMap.wouldConflict('A/b')).to.be.falsy
-    expect(fileMap.wouldConflict('a/B')).to.be.falsy
-    expect(fileMap.wouldConflict('A/B')).to.be.falsy
+    expect(fileMap.wouldConflict('a/b/C')).to.not.be.ok
+    expect(fileMap.wouldConflict('A')).to.not.be.ok
+    expect(fileMap.wouldConflict('A/b')).to.not.be.ok
+    expect(fileMap.wouldConflict('a/B')).to.not.be.ok
+    expect(fileMap.wouldConflict('A/B')).to.not.be.ok
   })
 
   it('does not add a file with a conflicting path', function () {

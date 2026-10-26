@@ -1,6 +1,6 @@
 import sinon from 'sinon'
 import Path from 'node:path'
-import contentDisposition from 'content-disposition'
+import { create as contentDisposition } from 'content-disposition'
 
 class MockResponse {
   static initClass() {

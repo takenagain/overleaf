@@ -208,6 +208,14 @@ describe('SubscriptionUpdater', function () {
       default: ctx.Settings,
     }))
 
+    ctx.session = {
+      withTransaction: sinon.stub().callsFake(callback => callback()),
+      endSession: sinon.stub().resolves(),
+    }
+    vi.doMock('../../../../app/src/infrastructure/Mongoose.mjs', () => ({
+      default: { startSession: sinon.stub().resolves(ctx.session) },
+    }))
+
     vi.doMock('../../../../app/src/infrastructure/mongodb', () => ({
       db: {},
       ObjectId,

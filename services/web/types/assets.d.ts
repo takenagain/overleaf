@@ -34,3 +34,5 @@ declare module '*.txt' {
 }
 
 declare module '*.css' {}
+
+declare module '*.scss' {}

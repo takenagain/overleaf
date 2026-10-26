@@ -4,12 +4,7 @@ module.exports = {
     [
       '@babel/env',
       {
-        useBuiltIns: 'usage',
-        // This version must be aligned with the `core-js` version in `package.json`
-        corejs: { version: '3.46' },
         exclude: [
-          // Exclude Array.prototype.push polyfill, as it's not needed and affects performance in Chrome
-          'es.array.push',
           // Exclude objectSpread polyfill, as it's not needed and affects performance
           '@babel/plugin-transform-object-rest-spread',
           // Exclude _defineProperty polyfill, as it causes a bug without the objectSpread polyfill
@@ -25,11 +20,20 @@ module.exports = {
         ],
       },
     ],
-    ['@babel/react', { runtime: 'automatic' }],
-    '@babel/typescript',
+    ['@babel/typescript', { onlyRemoveTypeImports: false }],
   ],
-  plugins: ['macros'],
+  plugins: [
+    'macros',
+    [
+      'polyfill-corejs3',
+      { method: 'usage-global', version: '3.51', exclude: ['es.array.push'] },
+    ],
+  ],
   overrides: [
+    {
+      test: /\.(?:jsx?|tsx)$/,
+      presets: [['@babel/react', { runtime: 'automatic' }]],
+    },
     // treat .cjs files (e.g. libraries symlinked into node_modules) as commonjs
     { test: /\.cjs$/, sourceType: 'script' },
     {

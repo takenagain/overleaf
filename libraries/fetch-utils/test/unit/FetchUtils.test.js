@@ -91,12 +91,12 @@ describe('fetch-utils', function () {
       expect(json).to.deep.equal({ sum: 5 })
     })
 
-    it('throws a FetchError when the payload is not JSON', async function () {
-      await expect(fetchJson(url('/hello'))).to.be.rejectedWith(FetchError)
+    it('throws a SyntaxError when the payload is not JSON', async function () {
+      await expect(fetchJson(url('/hello'))).to.be.rejectedWith(SyntaxError)
     })
 
     it('aborts the request if JSON parsing fails', async function () {
-      await expect(fetchJson(url('/large'))).to.be.rejectedWith(FetchError)
+      await expect(fetchJson(url('/large'))).to.be.rejectedWith(SyntaxError)
       await expectRequestAborted(server.lastReq)
     })
 
@@ -139,10 +139,17 @@ describe('fetch-utils', function () {
 
     it("destroys the request body if it doesn't get consumed", async function () {
       const stream = Readable.from(infiniteIterator())
-      await fetchJson(url('/json/ignore-request'), {
-        method: 'POST',
-        body: stream,
-      })
+      try {
+        await fetchJson(url('/json/ignore-request'), {
+          method: 'POST',
+          body: stream,
+        })
+      } catch (error) {
+        // The server closes without consuming the infinite upload. Depending on
+        // TCP timing, that can reset the connection before the response arrives.
+        expect(error).to.be.instanceOf(FetchError)
+        expect(error.code).to.be.oneOf(['EPIPE', 'ECONNRESET'])
+      }
       expect(stream.destroyed).to.be.true
     })
 

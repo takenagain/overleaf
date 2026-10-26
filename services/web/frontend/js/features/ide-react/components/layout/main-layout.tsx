@@ -1,4 +1,4 @@
-import { Panel, PanelGroup } from 'react-resizable-panels'
+import { Panel, PanelGroup } from '@/shared/components/resizable-panels'
 import classNames from 'classnames'
 import { HorizontalResizeHandle } from '@/features/ide-react/components/resize/horizontal-resize-handle'
 import PdfPreview from '@/features/pdf-preview/components/pdf-preview'

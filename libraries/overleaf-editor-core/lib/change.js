@@ -2,7 +2,7 @@
 
 const _ = require('lodash')
 const assert = require('check-types').assert
-const pMap = require('p-map')
+const pMap = require('p-map').default
 
 const AuthorList = require('./author_list')
 const Operation = require('./operation')

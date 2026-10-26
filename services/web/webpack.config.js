@@ -218,19 +218,6 @@ module.exports = {
               },
             },
           },
-          // Compile Sass off the main event loop
-          {
-            loader: 'thread-loader',
-            options: {
-              // keep workers alive for dev-server, and shut them down when not needed
-              poolTimeout:
-                process.env.NODE_ENV === 'development' ? 10 * 60 * 1000 : 500,
-              // bring up more workers after they timed out
-              poolRespawn: true,
-              // limit concurrency (one per entrypoint and let the small includes queue up)
-              workers: 6,
-            },
-          },
           // Compiles Sass to CSS
           {
             loader: 'sass-loader',
@@ -439,7 +426,7 @@ module.exports = {
           context: pyodideDir,
         },
         {
-          from: 'pyodide.asm.js',
+          from: 'pyodide.asm.mjs',
           to: 'js/libs/pyodide',
           toType: 'dir',
           context: pyodideDir,

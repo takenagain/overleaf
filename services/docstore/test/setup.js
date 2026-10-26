@@ -1,7 +1,7 @@
 import sinonChai from 'sinon-chai'
 import chaiAsPromised from 'chai-as-promised'
 import mongodb from 'mongodb-legacy'
-import chai from 'chai'
+import * as chai from 'chai'
 
 // ensure every ObjectId has the id string as a property for correct comparisons
 mongodb.ObjectId.cacheHexString = true

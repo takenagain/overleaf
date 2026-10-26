@@ -1,4 +1,4 @@
-import { Dashboard } from '@uppy/react'
+import Dashboard from '@uppy/react/dashboard'
 import { useTranslation } from 'react-i18next'
 import { useProjectUploader } from '../../hooks/use-project-uploader'
 import {
@@ -12,8 +12,8 @@ import OLButton from '@/shared/components/ol/ol-button'
 import { useFeatureFlag } from '@/shared/context/split-test-context'
 import { useActiveOverallTheme } from '@/shared/hooks/use-active-overall-theme'
 
-import '@uppy/core/dist/style.css'
-import '@uppy/dashboard/dist/style.css'
+import '@uppy/core/css/style.css'
+import '@uppy/dashboard/css/style.css'
 
 function UploadProjectModal({
   onHide,

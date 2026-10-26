@@ -917,7 +917,7 @@ describe('CompileController', function () {
 
       it('should set the content-disposition header with a safe version of the project name', function (ctx) {
         expect(ctx.res.headers['Content-Disposition']).toEqual(
-          'attachment; filename="test_namè__1-output.zip"'
+          'attachment; filename="test_nam?__1-output.zip"; filename*=UTF-8\'\'test_nam%C3%A8__1-output.zip'
         )
       })
 

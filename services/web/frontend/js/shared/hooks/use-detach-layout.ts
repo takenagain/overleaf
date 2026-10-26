@@ -25,7 +25,7 @@ export default function useDetachLayout() {
   // redundant
   const [isRedundant, setIsRedundant] = useState(false)
 
-  const uiTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
+  const uiTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   useEffect(() => {
     if (debugPdfDetach) {

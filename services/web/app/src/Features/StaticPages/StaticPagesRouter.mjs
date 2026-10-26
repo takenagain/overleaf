@@ -23,6 +23,6 @@ export default {
     )
 
     webRouter.get('/university', UniversityController.getIndexPage)
-    return webRouter.get('/university/*', UniversityController.getPage)
+    return webRouter.get(/^\/university\/(.*)$/i, UniversityController.getPage)
   },
 }

@@ -93,7 +93,7 @@ export const FullProjectSearchResults: FC<{
   const { findEntityByPath } = useFileTreePathContext()
   const { openDocWithId, openFileWithId } = useEditorManagerContext()
 
-  const selectedHitRef = useRef<Hit>()
+  const selectedHitRef = useRef<Hit>(undefined)
 
   useEffect(() => {
     // only open the doc if selectedHit has actually changed

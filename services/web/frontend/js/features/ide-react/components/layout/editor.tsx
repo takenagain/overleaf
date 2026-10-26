@@ -3,7 +3,7 @@ import { useEditorOpenDocContext } from '@/features/ide-react/context/editor-ope
 import { useFileTreeOpenContext } from '@/features/ide-react/context/file-tree-open-context'
 import classNames from 'classnames'
 import SourceEditor from '@/features/source-editor/components/source-editor'
-import { Panel, PanelGroup } from 'react-resizable-panels'
+import { Panel, PanelGroup } from '@/shared/components/resizable-panels'
 import { VerticalResizeHandle } from '@/features/ide-react/components/resize/vertical-resize-handle'
 import { FC, Suspense } from 'react'
 import { FullSizeLoadingSpinner } from '@/shared/components/loading-spinner'

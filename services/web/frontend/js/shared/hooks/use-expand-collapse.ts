@@ -7,7 +7,7 @@ function useExpandCollapse({
   dimension = 'height',
   classes = { container: '', containerCollapsed: '' },
 } = {}) {
-  const ref = useRef<{ scrollHeight: number; scrollWidth: number }>()
+  const ref = useRef<{ scrollHeight: number; scrollWidth: number } | null>(null)
   const [isExpanded, setIsExpanded] = useState(initiallyExpanded)
   const [sizing, setSizing] = useState<{
     size: number | null

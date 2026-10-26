@@ -1,8 +1,8 @@
 'use strict'
 
 const { expect } = require('chai')
-const HTTPStatus = require('http-status')
-const fetch = require('node-fetch')
+const HTTPStatus = require('http-status').default
+const fetch = require('node-fetch').default
 const fs = require('node:fs')
 
 const cleanup = require('../storage/support/cleanup')

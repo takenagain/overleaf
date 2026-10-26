@@ -219,11 +219,11 @@ async function initialize(webRouter, privateApiRouter, publicApiRouter) {
   webRouter.use(unsupportedBrowserMiddleware)
 
   if (!Settings.allowPublicAccess) {
-    webRouter.all('*', AuthenticationController.requireGlobalLogin)
+    webRouter.all(/.*/, AuthenticationController.requireGlobalLogin)
   }
 
-  webRouter.get('*', AnalyticsRegistrationSourceMiddleware.setInbound())
-  webRouter.get('*', AnalyticsUTMTrackingMiddleware.recordUTMTags())
+  webRouter.get(/.*/, AnalyticsRegistrationSourceMiddleware.setInbound())
+  webRouter.get(/.*/, AnalyticsUTMTrackingMiddleware.recordUTMTags())
 
   if (process.env.NODE_ENV === 'development' && global.__coverage__) {
     // Expose code coverage via an endpoint when running with code coverage enabled
@@ -578,7 +578,7 @@ async function initialize(webRouter, privateApiRouter, publicApiRouter) {
     // Keep the old route for continuous metrics
     '/Project/:Project_id',
     // New route for pdf-detach
-    '/Project/:Project_id/:detachRole(detacher|detached)',
+    /^\/Project\/(?<Project_id>[^\/]+)\/(?<detachRole>detacher|detached)\/?$/i,
   ]) {
     webRouter.get(
       route,
@@ -677,7 +677,7 @@ async function initialize(webRouter, privateApiRouter, publicApiRouter) {
 
   // direct url access to output files for a specific build
   webRouter.get(
-    '/project/:Project_id/build/:build_id/output/:file(.+)',
+    /^\/project\/(?<Project_id>[^\/]+)\/build\/(?<build_id>[^\/]+)\/output\/(?<file>.+)\/?$/i,
     rateLimiterMiddlewareOutputFiles,
     AuthorizationMiddleware.ensureUserCanReadProject,
     CompileController.getFileFromClsi
@@ -685,7 +685,7 @@ async function initialize(webRouter, privateApiRouter, publicApiRouter) {
 
   // direct url access to output files for a specific user and build
   webRouter.get(
-    '/project/:Project_id/user/:user_id/build/:build_id/output/:file(.+)',
+    /^\/project\/(?<Project_id>[^\/]+)\/user\/(?<user_id>[^\/]+)\/build\/(?<build_id>[^\/]+)\/output\/(?<file>.+)\/?$/i,
     rateLimiterMiddlewareOutputFiles,
     AuthorizationMiddleware.ensureUserCanReadProject,
     CompileController.getFileFromClsi
@@ -791,7 +791,7 @@ async function initialize(webRouter, privateApiRouter, publicApiRouter) {
       ProjectDownloadsController.exportProjectConversion
     )
     webRouter.get(
-      '/project/:Project_id/download/conversion/:conversionId/:type/build/:buildId/output/:file(.+)',
+      /^\/project\/(?<Project_id>[^\/]+)\/download\/conversion\/(?<conversionId>[^\/]+)\/(?<type>[^\/]+)\/build\/(?<buildId>[^\/]+)\/output\/(?<file>.+)\/?$/i,
       AuthenticationController.requireLogin(),
       RateLimiterMiddleware.rateLimit(rateLimiters.documentExportDownload, {
         params: ['Project_id'],
@@ -1003,33 +1003,33 @@ async function initialize(webRouter, privateApiRouter, publicApiRouter) {
     TpdsController.updateFolder
   )
   privateApiRouter.post(
-    '/user/:user_id/update/:path(.+)',
+    /^\/user\/(?<user_id>[^\/]+)\/update\/(?<path>.+)\/?$/i,
     AuthenticationController.requirePrivateApiAuth(),
     TpdsController.mergeUpdate
   )
   privateApiRouter.delete(
-    '/user/:user_id/update/:path(.+)',
+    /^\/user\/(?<user_id>[^\/]+)\/update\/(?<path>.+)\/?$/i,
     AuthenticationController.requirePrivateApiAuth(),
     TpdsController.deleteUpdate
   )
   privateApiRouter.post(
-    '/project/:project_id/user/:user_id/update/:path(.+)',
+    /^\/project\/(?<project_id>[^\/]+)\/user\/(?<user_id>[^\/]+)\/update\/(?<path>.+)\/?$/i,
     AuthenticationController.requirePrivateApiAuth(),
     TpdsController.mergeUpdate
   )
   privateApiRouter.delete(
-    '/project/:project_id/user/:user_id/update/:path(.+)',
+    /^\/project\/(?<project_id>[^\/]+)\/user\/(?<user_id>[^\/]+)\/update\/(?<path>.+)\/?$/i,
     AuthenticationController.requirePrivateApiAuth(),
     TpdsController.deleteUpdate
   )
 
   privateApiRouter.post(
-    '/project/:project_id/contents/:path(.+)',
+    /^\/project\/(?<project_id>[^\/]+)\/contents\/(?<path>.+)\/?$/i,
     AuthenticationController.requirePrivateApiAuth(),
     TpdsController.updateProjectContents
   )
   privateApiRouter.delete(
-    '/project/:project_id/contents/:path(.+)',
+    /^\/project\/(?<project_id>[^\/]+)\/contents\/(?<path>.+)\/?$/i,
     AuthenticationController.requirePrivateApiAuth(),
     TpdsController.deleteProjectContents
   )
@@ -1274,7 +1274,10 @@ async function initialize(webRouter, privateApiRouter, publicApiRouter) {
 
   if (Features.hasFeature('link-sharing')) {
     webRouter.get(
-      `/read/:token(${TokenAccessController.READ_ONLY_TOKEN_PATTERN})`,
+      new RegExp(
+        `^/read/(?<token>${TokenAccessController.READ_ONLY_TOKEN_PATTERN})/?$`,
+        'i'
+      ),
       RateLimiterMiddleware.rateLimit(rateLimiters.readOnlyToken),
       AnalyticsRegistrationSourceMiddleware.setSource(
         'collaboration',
@@ -1285,7 +1288,10 @@ async function initialize(webRouter, privateApiRouter, publicApiRouter) {
     )
 
     webRouter.get(
-      `/:token(${TokenAccessController.READ_AND_WRITE_TOKEN_PATTERN})`,
+      new RegExp(
+        `^/(?<token>${TokenAccessController.READ_AND_WRITE_TOKEN_PATTERN})/?$`,
+        'i'
+      ),
       RateLimiterMiddleware.rateLimit(rateLimiters.readAndWriteToken),
       AnalyticsRegistrationSourceMiddleware.setSource(
         'collaboration',
@@ -1296,13 +1302,19 @@ async function initialize(webRouter, privateApiRouter, publicApiRouter) {
     )
 
     webRouter.post(
-      `/:token(${TokenAccessController.READ_AND_WRITE_TOKEN_PATTERN})/grant`,
+      new RegExp(
+        `^/(?<token>${TokenAccessController.READ_AND_WRITE_TOKEN_PATTERN})/grant/?$`,
+        'i'
+      ),
       RateLimiterMiddleware.rateLimit(rateLimiters.grantTokenAccessReadWrite),
       TokenAccessController.grantTokenAccessReadAndWrite
     )
 
     webRouter.post(
-      `/read/:token(${TokenAccessController.READ_ONLY_TOKEN_PATTERN})/grant`,
+      new RegExp(
+        `^/read/(?<token>${TokenAccessController.READ_ONLY_TOKEN_PATTERN})/grant/?$`,
+        'i'
+      ),
       RateLimiterMiddleware.rateLimit(rateLimiters.grantTokenAccessReadOnly),
       TokenAccessController.grantTokenAccessReadOnly
     )
@@ -1310,7 +1322,7 @@ async function initialize(webRouter, privateApiRouter, publicApiRouter) {
 
   webRouter.get('/unsupported-browser', renderUnsupportedBrowserPage)
 
-  webRouter.get('*', ErrorController.notFound)
+  webRouter.get(/.*/, ErrorController.notFound)
 }
 
 export default { initialize, rateLimiters }

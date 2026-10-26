@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, chai, vi } from 'vitest'
+import { createRequire } from 'node:module'
 import 'sinon-mongoose'
 import sinon from 'sinon'
 import logger from '@overleaf/logger'
@@ -7,6 +8,11 @@ import sinonChai from 'sinon-chai'
 import chaiAsPromised from 'chai-as-promised'
 import mongoose from 'mongoose'
 import mongodb from 'mongodb-legacy'
+
+// sinon-mongoose patches the CommonJS instance; Sinon 22 exports a separate ESM bundle.
+vi.mock('sinon', () => ({
+  default: createRequire(import.meta.url)('sinon'),
+}))
 
 mongodb.ObjectId.cacheHexString = true
 

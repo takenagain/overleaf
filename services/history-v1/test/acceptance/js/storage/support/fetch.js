@@ -1,6 +1,4 @@
 const BPromise = require('bluebird')
-const fetch = require('node-fetch')
+const fetch = require('node-fetch').default
 
-fetch.Promise = BPromise
-
-module.exports = fetch
+module.exports = (...args) => BPromise.resolve(fetch(...args))

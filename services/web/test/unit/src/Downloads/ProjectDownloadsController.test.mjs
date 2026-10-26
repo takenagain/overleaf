@@ -176,7 +176,7 @@ describe('ProjectDownloadsController', function () {
 
     it('should name the downloaded file after the project but sanitise special characters', function (ctx) {
       ctx.res.headers.should.deep.equal({
-        'Content-Disposition': `attachment; filename="project_name_with_accênts_and___special_characters.zip"`,
+        'Content-Disposition': `attachment; filename="project_name_with_acc?nts_and___special_characters.zip"; filename*=UTF-8''project_name_with_acc%C3%AAnts_and___special_characters.zip`,
         'Content-Type': 'application/zip',
         'X-Accel-Buffering': 'no',
         'X-Content-Type-Options': 'nosniff',

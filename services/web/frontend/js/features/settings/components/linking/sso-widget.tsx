@@ -14,7 +14,7 @@ import {
   OLModalTitle,
 } from '@/shared/components/ol/ol-modal'
 
-const providerLogos: { readonly [p: string]: JSX.Element } = {
+const providerLogos: { readonly [p: string]: React.JSX.Element } = {
   collabratec: <IEEELogo />,
   google: <GoogleLogo />,
   orcid: <OrcidLogo />,

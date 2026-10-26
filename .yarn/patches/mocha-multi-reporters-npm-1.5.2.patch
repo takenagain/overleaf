@@ -1,0 +1,25 @@
+diff --git a/lib/MultiReporters.js b/lib/MultiReporters.js
+index 2d5d236..75c2303 100644
+--- a/lib/MultiReporters.js
++++ b/lib/MultiReporters.js
+@@ -22,8 +22,9 @@ try {
+     );
+     const {version} = json;
+     // istanbul ignore else
+-    if (version >= '6') {
+-        createStatsCollector = require('mocha/lib/stats-collector');
++    if (parseInt(version, 10) >= 6) {
++        const stats = require('mocha/lib/stats-collector');
++        createStatsCollector = stats.createStatsCollector || stats;
+         mocha6plus = true;
+     }
+     else {
+@@ -157,7 +158,7 @@ class MultiReporters extends Base {
+             debug('options file (custom)', customOptionsFile);
+ 
+             try {
+-                if ('.js' === path.extname(customOptionsFile)) {
++                if (['.js', '.cjs'].includes(path.extname(customOptionsFile))) {
+                     customOptions = require(customOptionsFile);
+                 }
+                 else {

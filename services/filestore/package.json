@@ -15,10 +15,10 @@
     "test:acceptance:_run": "mocha --recursive --timeout 15000 --exit --retries=$RETRIES $@ test/acceptance/js",
     "test:unit:_run": "vitest --config ./vitest.config.unit.cjs",
     "lint:fix": "eslint --cache --cache-location ../../.cache/eslint/ --fix .",
-    "types:check": "tsc --noEmit"
+    "types:check": "node ../../tools/type-check.mjs --noEmit"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.994.0",
+    "@aws-sdk/client-s3": "^3.1156.0",
     "@overleaf/logger": "workspace:*",
     "@overleaf/metrics": "workspace:*",
     "@overleaf/o-error": "workspace:*",
@@ -27,28 +27,28 @@
     "@overleaf/stream-utils": "^0.1.0",
     "@overleaf/validation-tools": "workspace:*",
     "bunyan": "^1.8.15",
-    "express": "4.22.1",
-    "glob": "^12.0.0",
+    "express": "5.3.0",
+    "glob": "^13.0.6",
     "lodash.once": "^4.1.1",
-    "node-fetch": "^2.7.0",
+    "node-fetch": "^3.3.2",
     "overleaf-editor-core": "workspace:*",
-    "range-parser": "^1.2.1",
-    "tiny-async-pool": "^1.1.0"
+    "range-parser": "^1.3.0",
+    "tiny-async-pool": "^2.1.0"
   },
   "devDependencies": {
-    "@google-cloud/storage": "^7.19.0",
-    "@types/node": "^24.5.2",
-    "chai": "^4.3.6",
-    "chai-as-promised": "^7.1.1",
-    "eslint": "^10.4.0",
-    "mocha": "^11.1.0",
-    "mocha-junit-reporter": "^2.2.1",
-    "mocha-multi-reporters": "^1.5.1",
-    "mongodb": "6.12.0",
-    "sinon": "9.0.2",
-    "sinon-chai": "^3.7.0",
+    "@google-cloud/storage": "^8.4.0",
+    "@types/node": "^26.6.5",
+    "chai": "^6.3.0",
+    "chai-as-promised": "^8.0.2",
+    "eslint": "^10.13.0",
+    "mocha": "^12.0.3",
+    "mocha-junit-reporter": "patch:mocha-junit-reporter@npm%3A2.2.1#~/.yarn/patches/mocha-junit-reporter-npm-2.2.1-e02a1e67a3.patch",
+    "mocha-multi-reporters": "^1.5.2",
+    "mongodb": "7.7.0",
+    "sinon": "22.1.0",
+    "sinon-chai": "^4.0.1",
     "streamifier": "^0.1.1",
-    "typescript": "^5.0.4",
-    "vitest": "4.1.5"
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "vitest": "5.0.5"
   }
 }

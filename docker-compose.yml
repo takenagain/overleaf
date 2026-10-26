@@ -25,7 +25,8 @@ services:
 
   mongo:
     restart: always
-    image: mongo:8.0
+    # Existing databases require the staged upgrade in docs/runtime-upgrades.md.
+    image: mongo:9.0.4
     container_name: mongo
     command: "--replSet overleaf"
     volumes:
@@ -45,7 +46,7 @@ services:
 
   redis:
     restart: always
-    image: redis:trixie
+    image: redis:8.8.3-trixie
     container_name: redis
     volumes:
       - ${HOME}/${SHARELATEX_DATA_ROOT_DIR:-sharelatex}/redis_data:/data

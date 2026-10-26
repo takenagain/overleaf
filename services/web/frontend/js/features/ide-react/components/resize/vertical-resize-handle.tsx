@@ -1,7 +1,7 @@
 import {
   PanelResizeHandle,
   PanelResizeHandleProps,
-} from 'react-resizable-panels'
+} from '@/shared/components/resizable-panels'
 import { useTranslation } from 'react-i18next'
 import classNames from 'classnames'
 

@@ -12,8 +12,8 @@ try {
 
 const chai = require('chai')
 chai.should()
-chai.use(require('chai-as-promised'))
-chai.use(require('sinon-chai'))
+chai.use(require('chai-as-promised').default)
+chai.use(require('sinon-chai').default)
 chai.use(require('chai-exclude'))
 
 // Do not truncate assertion errors

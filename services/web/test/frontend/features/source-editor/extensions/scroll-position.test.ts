@@ -46,7 +46,7 @@ describe('CodeMirror scroll position extension', function () {
   it('stores scroll position when the view is destroyed', async function () {
     const currentDoc = mockDoc()
 
-    sinon.stub(window.Storage.prototype, 'getItem').callsFake(key => {
+    sinon.stub(window.Storage.prototype, 'getItem').callsFake((key) => {
       switch (key) {
         case 'doc.position.test-doc':
           return JSON.stringify({
@@ -65,6 +65,10 @@ describe('CodeMirror scroll position extension', function () {
       }),
     })
 
+    // jsdom has no layout; supply the line exposed at the simulated scroll position.
+    sinon
+      .stub(view, 'lineBlockAtHeight')
+      .returns(view.lineBlockAt(view.state.doc.line(12).from))
     const setItem = sinon.spy(window.Storage.prototype, 'setItem')
     fireEvent.scroll(view.scrollDOM, { target: { scrollTop: 10 } })
 
@@ -85,7 +89,7 @@ describe('CodeMirror scroll position extension', function () {
 
     const getItem = sinon
       .stub(window.Storage.prototype, 'getItem')
-      .callsFake(key => {
+      .callsFake((key) => {
         switch (key) {
           case 'editor.position.test-doc':
             return JSON.stringify({ firstVisibleLine: 12 })

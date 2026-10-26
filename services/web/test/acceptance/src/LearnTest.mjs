@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import cheerio from 'cheerio'
+import * as cheerio from 'cheerio'
 import UserHelper from './helpers/User.mjs'
 
 const User = UserHelper.promises

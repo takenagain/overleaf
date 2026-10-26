@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-COMMIT="e994dceb97fb695bca6bfe5ad5665525426bf01f"
+COMMIT="e8342700b4dde06130cdbba75f7e6500ffa58864" # Hunspell 1.7.5
 
-curl -L "https://github.com/hunspell/hunspell/archive/${COMMIT}.tar.gz" | tar xvz
+curl --fail --location "https://github.com/hunspell/hunspell/archive/${COMMIT}.tar.gz" | tar xvz
 
 cd "hunspell-${COMMIT}"
 autoreconf -fiv

@@ -11,7 +11,7 @@ CRYPTO_RANDOM_FILE=/etc/container_environment/CRYPTO_RANDOM
 OT_JWT_AUTH_KEY_FILE=/etc/container_environment/OT_JWT_AUTH_KEY
 
 generate_secret () {
-  dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 -w 0 | rev | cut -b 2- | rev | tr -d '\n+/'
+  dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 -w 0 | tr -d '\n+/='
 }
 
 if [ ! -f "$WEB_API_PASSWORD_FILE" ] ||

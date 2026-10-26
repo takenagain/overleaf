@@ -1,5 +1,5 @@
 diff --git a/lib/request.js b/lib/request.js
-index f42960ca2b94b784497392cfb85ef31e4e63a1ac..7feea2ed29873e519aee0ba5e1f5b36e09fe865d 100644
+index c1cd37e..560bfac 100644
 --- a/lib/request.js
 +++ b/lib/request.js
 @@ -6,6 +6,30 @@
@@ -33,21 +33,20 @@ index f42960ca2b94b784497392cfb85ef31e4e63a1ac..7feea2ed29873e519aee0ba5e1f5b36e
  
  /**
   * Wrapper for webserver's request.
-@@ -29,7 +53,12 @@ class Request {
-      * @param otherOptions {...object} any other properties that should be assigned to the request by your webserver
-      * @throws {InvalidArgumentError} if one of headers, method or query are missing.
-      */
+@@ -29,7 +53,11 @@ class Request {
+    * @param otherOptions {...object} any other properties that should be assigned to the request by your webserver
+    * @throws {InvalidArgumentError} if one of headers, method or query are missing.
+    */
 -  constructor({ headers, method, query, body, ...otherOptions } = {}) {
 +  constructor(req = {}) {
 +    const headers = req.headers;
 +    const method = req.method;
 +    const query = __overleafRawQuery(req);
 +    const body = __overleafRawBody(req);
-+
      if (!headers) {
        throw new InvalidArgumentError('Missing parameter: `headers`');
      }
-@@ -52,7 +81,16 @@ class Request {
+@@ -52,7 +80,16 @@ class Request {
        this.headers[header.toLowerCase()] = value;
      });
  

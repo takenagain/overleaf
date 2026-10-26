@@ -1,6 +1,6 @@
 import { useEffect, useState, FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import getDroppedFiles from '@uppy/utils/lib/getDroppedFiles'
+import { getDroppedFiles } from '@uppy/core/utils'
 import { DndProvider, DragSourceMonitor, useDrag, useDrop } from 'react-dnd'
 import {
   HTML5Backend,

@@ -8,7 +8,9 @@ const MODULE_PATH = '../../../../app/src/Features/Tutorial/TutorialHandler'
 
 describe('TutorialHandler', function () {
   beforeEach(async function (ctx) {
-    ctx.clock = sinon.useFakeTimers()
+    ctx.clock = sinon.useFakeTimers({
+      toNotFake: ['nextTick', 'queueMicrotask'],
+    })
 
     const THIRTY_DAYS_AGO = Date.now() - 30 * 24 * 60 * 60 * 1000
     const TOMORROW = Date.now() + 24 * 60 * 60 * 1000

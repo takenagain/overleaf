@@ -66,7 +66,9 @@ function FileTreeFolder({
         {...selectableEntityProps}
         aria-expanded={expanded}
         aria-label={name}
-        ref={dropRefRoot}
+        ref={node => {
+          dropRefRoot?.(node)
+        }}
         className={classNames(selectableEntityProps.className, {
           'dnd-droppable-hover': isOverRoot || isOverList,
         })}

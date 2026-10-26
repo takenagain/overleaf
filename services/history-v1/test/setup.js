@@ -1,7 +1,7 @@
 const chai = require('chai')
-const chaiAsPromised = require('chai-as-promised')
+const chaiAsPromised = require('chai-as-promised').default
 const config = require('config')
-const fetch = require('node-fetch')
+const fetch = require('node-fetch').default
 const { knex, redis } = require('../storage')
 const { exec } = require('node:child_process')
 const { promisify } = require('node:util')

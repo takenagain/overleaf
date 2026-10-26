@@ -89,6 +89,7 @@ export default class TokenUsageRateLimiter {
       {
         new: true,
         upsert: true,
+        updatePipeline: true,
       }
     ).exec()
 

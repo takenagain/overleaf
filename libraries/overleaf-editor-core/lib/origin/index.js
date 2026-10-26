@@ -33,6 +33,8 @@ const EDITOR_ORIGIN_KIND = 'editor'
  * as restoring a version.
  */
 class Origin {
+  static EDITOR_ORIGIN_KIND = EDITOR_ORIGIN_KIND
+
   /**
    * @param {string} kind
    * @param {string} [historyClientId] identifies the client that submitted the
@@ -128,7 +130,6 @@ class Origin {
 }
 
 module.exports = Origin
-module.exports.EDITOR_ORIGIN_KIND = EDITOR_ORIGIN_KIND
 
 RestoreOrigin = require('./restore_origin')
 RestoreFileOrigin = require('./restore_file_origin')

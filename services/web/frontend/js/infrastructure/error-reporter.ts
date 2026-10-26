@@ -2,7 +2,7 @@
 import getMeta from '../utils/meta'
 import OError from '@overleaf/o-error'
 import { debugConsole } from '@/utils/debugging'
-import type { ErrorEvent } from '@sentry/types/types/event'
+import type { ErrorEvent } from '@sentry/browser'
 
 const {
   sentryAllowedOriginRegex,
@@ -75,7 +75,10 @@ function sentryReporter() {
           dsn: sentryDsn,
           environment: sentryEnvironment,
           release: sentryRelease,
-          autoSessionTracking: false,
+          integrations: integrations =>
+            integrations.filter(
+              integration => integration.name !== 'BrowserSession'
+            ),
 
           // Ignore errors unless they come from our origins
           // Adapted from: https://docs.sentry.io/platforms/javascript/configuration/filtering/#decluttering-sentry

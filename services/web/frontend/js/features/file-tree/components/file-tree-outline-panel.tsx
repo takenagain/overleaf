@@ -1,4 +1,4 @@
-import { Panel, PanelGroup } from 'react-resizable-panels'
+import { Panel, PanelGroup } from '@/shared/components/resizable-panels'
 import { FileTree } from '@/features/ide-react/components/file-tree'
 import { OutlineContainer } from '@/features/outline/components/outline-container'
 import { VerticalResizeHandle } from '@/features/ide-react/components/resize/vertical-resize-handle'

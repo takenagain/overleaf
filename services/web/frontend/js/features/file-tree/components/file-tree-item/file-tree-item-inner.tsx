@@ -86,7 +86,9 @@ function FileTreeItemInner({
         'file-tree-entity-dragging': dragDropItem?.draggedEntityIds?.has(id),
       })}
       role="presentation"
-      ref={dragRef}
+      ref={node => {
+        dragRef?.(node)
+      }}
       draggable={!isRenaming}
       onContextMenu={handleContextMenu}
       data-file-id={id}

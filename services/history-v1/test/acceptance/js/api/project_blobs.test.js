@@ -1,8 +1,8 @@
 const { expect } = require('chai')
 const config = require('config')
 const fs = require('node:fs')
-const fetch = require('node-fetch')
-const HTTPStatus = require('http-status')
+const fetch = require('node-fetch').default
+const HTTPStatus = require('http-status').default
 
 const cleanup = require('../storage/support/cleanup')
 const fixtures = require('../storage/support/fixtures')

@@ -265,13 +265,15 @@ module.exports = class GcsPersistor extends AbstractPersistor {
         // iterate over paginated results using the nextQuery returned by getFiles
         query = nextQuery
         if (Array.isArray(files) && files.length > 0) {
-          await asyncPool(
+          for await (const _ of asyncPool(
             this.settings.deleteConcurrency,
             files,
             async file => {
               await this.deleteObject(bucketName, file.name)
             }
-          )
+          )) {
+            // Consume the iterator so every deletion completes.
+          }
         }
       } catch (err) {
         const error = PersistorHelper.wrapError(

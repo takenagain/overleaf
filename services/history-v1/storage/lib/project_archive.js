@@ -6,7 +6,7 @@
  * @import { BlobStore } from '../../storage/lib/blob_store/index'
  */
 
-const Archive = require('archiver')
+const { ZipArchive } = require('archiver')
 const BPromise = require('bluebird')
 const fs = require('node:fs')
 const { pipeline } = require('node:stream')
@@ -69,7 +69,7 @@ class ProjectArchive {
     const timeout = this.timeout
 
     const startTime = process.hrtime()
-    const archive = new Archive('zip')
+    const archive = new ZipArchive()
 
     // Convert elapsed seconds and nanoseconds to milliseconds.
     function findElapsedMilliseconds() {

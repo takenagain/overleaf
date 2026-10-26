@@ -1,0 +1,51 @@
+diff --git a/index.js b/index.js
+index 4358aeb..29ee24a 100644
+--- a/index.js
++++ b/index.js
+@@ -1,3 +1,7 @@
++const RAW_PARAMS = Symbol.for('overleaf.lockdown.rawParams')
++const INSTALLED = Symbol.for('overleaf.lockdown.installed')
++function rawParams(req) { return req[INSTALLED] ? req[RAW_PARAMS] : req.params }
++function paramsProp(req) { return req[INSTALLED] ? RAW_PARAMS : 'params' }
+ /*!
+  * router
+  * Copyright(c) 2013 Roman Shtylman
+@@ -166,9 +170,9 @@ Router.prototype.handle = function handle (req, res, callback) {
+   const stack = this.stack
+ 
+   // manage inter-router variables
+-  const parentParams = req.params
++  const parentParams = rawParams(req)
+   const parentUrl = req.baseUrl || ''
+-  let done = restore(callback, req, 'baseUrl', 'next', 'params')
++  let done = restore(callback, req, 'baseUrl', 'next', paramsProp(req))
+ 
+   // setup next layer
+   req.next = next
+@@ -602,7 +606,7 @@ function processParams (params, layer, called, req, res, done) {
+ 
+     paramIndex = 0
+     key = keys[i++]
+-    paramVal = req.params[key]
++    paramVal = rawParams(req)[key]
+     paramCallbacks = params[key]
+     paramCalled = called[key]
+ 
+@@ -614,7 +618,7 @@ function processParams (params, layer, called, req, res, done) {
+     if (paramCalled && (paramCalled.match === paramVal ||
+       (paramCalled.error && paramCalled.error !== 'route'))) {
+       // restore value
+-      req.params[key] = paramCalled.value
++      rawParams(req)[key] = paramCalled.value
+ 
+       // next param
+       return param(paramCalled.error)
+@@ -634,7 +638,7 @@ function processParams (params, layer, called, req, res, done) {
+     const fn = paramCallbacks[paramIndex++]
+ 
+     // store updated value
+-    paramCalled.value = req.params[key]
++    paramCalled.value = rawParams(req)[key]
+ 
+     if (err) {
+       // store error

@@ -15,7 +15,6 @@ export abstract class ReferenceIndex {
 
   parseEntries(content: string): Bib2JsonEntry[] {
     const allowedFields = ['author', 'journal', 'title', 'year', 'date']
-    // @ts-expect-error Bib2Json works as both a constructor and a function
     const { entries } = Bib2Json(content, allowedFields)
     for (const entry of entries) {
       if (entry.Fields?.year) {

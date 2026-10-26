@@ -1,4 +1,4 @@
-import { ImperativePanelHandle } from 'react-resizable-panels'
+import { ImperativePanelHandle } from '@/shared/components/resizable-panels'
 import { useRef } from 'react'
 import useCollapsiblePanel from '@/features/ide-react/hooks/use-collapsible-panel'
 import { useFileTreeOpenContext } from '@/features/ide-react/context/file-tree-open-context'

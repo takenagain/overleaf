@@ -1,6 +1,6 @@
 import React, {
   FC,
-  FormEventHandler,
+  InputEventHandler,
   memo,
   useCallback,
   useEffect,
@@ -169,15 +169,16 @@ const FullProjectSearchUI: FC = () => {
   )
 
   // clear the results when the form is cleared
-  const handleInput: FormEventHandler<HTMLInputElement> = useCallback(event => {
-    if (
-      event instanceof InputEvent &&
-      event.inputType === undefined &&
-      (event.target as HTMLInputElement).value.length === 0
-    ) {
-      setMatchedFiles(undefined)
-    }
-  }, [])
+  const handleInput: InputEventHandler<HTMLInputElement | HTMLTextAreaElement> =
+    useCallback(event => {
+      if (
+        event instanceof InputEvent &&
+        event.inputType === undefined &&
+        (event.target as HTMLInputElement).value.length === 0
+      ) {
+        setMatchedFiles(undefined)
+      }
+    }, [])
 
   const variableStyle = {
     '--font-family': fontFamily,

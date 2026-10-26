@@ -1,10 +1,10 @@
 diff --git a/lib/make-middleware.js b/lib/make-middleware.js
-index 2c15f248d4f4d221bd9e2b2e1092b8d5c46d2bdd..859f55f56729f0a3874cfdac53722497cfc3c461 100644
+index 1cce8e1..557759a 100644
 --- a/lib/make-middleware.js
 +++ b/lib/make-middleware.js
-@@ -26,7 +26,10 @@ function makeMiddleware (setup) {
-     var preservePath = options.preservePath
-     var defParamCharset = options.defParamCharset
+@@ -133,7 +133,10 @@ function makeMiddleware (setup) {
+     var fileHwm = options.fileHwm
+     var streamHandler = options.streamHandler || defaultStreamHandler
  
 -    req.body = Object.create(null)
 +    // keep a local reference: with the Overleaf request-input lockdown
@@ -14,17 +14,17 @@ index 2c15f248d4f4d221bd9e2b2e1092b8d5c46d2bdd..859f55f56729f0a3874cfdac53722497
  
      var busboy
      var appender = null
-@@ -157,7 +160,7 @@ function makeMiddleware (setup) {
-         if (fieldname.split('[').length - 1 > limits.fieldNestingDepth) return abortWithCode('LIMIT_FIELD_NESTING', fieldname)
+@@ -291,7 +294,7 @@ function makeMiddleware (setup) {
        }
  
--      appendField(req.body, fieldname, value)
-+      appendField(body, fieldname, value)
-     })
- 
-     // handle files
-@@ -174,7 +177,7 @@ function makeMiddleware (setup) {
-       if (fieldname == null) return abortWithCode('MISSING_FIELD_NAME')
+       try {
+-        appendField(req.body, fieldname, value)
++        appendField(body, fieldname, value)
+       } catch {
+         return abortWithCode('INVALID_FIELD_NAME', fieldname)
+       }
+@@ -339,7 +342,7 @@ function makeMiddleware (setup) {
+       fieldname = decodeFormDataName(fieldname)
  
        // don't attach to the files object, if there is no file
 -      if (!filename) return fileStream.resume()

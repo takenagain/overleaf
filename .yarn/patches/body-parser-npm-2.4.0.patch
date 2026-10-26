@@ -1,0 +1,13 @@
+diff --git a/lib/read.js b/lib/read.js
+index ab48aba..584cbd1 100644
+--- a/lib/read.js
++++ b/lib/read.js
+@@ -116,7 +116,7 @@ function read (req, res, next, parse, debug, options) {
+       stream = req
+     } else {
+       stream = createDecompressionStream(contentEncoding, debug)
+-      req.pipe(stream)
++      require('node:stream').pipeline(req, stream, () => {})
+     }
+   } catch (err) {
+     return next(err)

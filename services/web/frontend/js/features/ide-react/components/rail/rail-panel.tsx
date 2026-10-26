@@ -1,4 +1,4 @@
-import { Panel } from 'react-resizable-panels'
+import { Panel } from '@/shared/components/resizable-panels'
 import { useRailContext } from '@/features/ide-react/context/rail-context'
 import classNames from 'classnames'
 import { useCallback, useMemo } from 'react'

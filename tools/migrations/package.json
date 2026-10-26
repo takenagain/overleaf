@@ -9,7 +9,7 @@
     "lint:fix": "eslint --cache --cache-location ../../.cache/eslint/ --fix --ext .cjs,.js,.jsx,.mjs,.ts ."
   },
   "devDependencies": {
-    "eslint": "^10.4.0"
+    "eslint": "^10.13.0"
   },
   "dependencies": {
     "@overleaf/logger": "workspace:*",
@@ -19,6 +19,6 @@
     "@overleaf/settings": "workspace:*",
     "bcrypt": "^6.0.0",
     "east": "2.0.3",
-    "mongodb": "6.12.0"
+    "mongodb": "7.7.0"
   }
 }

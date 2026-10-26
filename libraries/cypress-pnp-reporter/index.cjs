@@ -40,7 +40,7 @@ function loadReporters() {
   return MultiReporters
 }
 
-if (process.versions.pnp) {
+if (process.versions.pnp || !require('node:fs').existsSync(path.join(__dirname, '..', '..', '.pnp.cjs'))) {
   module.exports = loadReporters()
 } else {
   const stockLoad = Module._load

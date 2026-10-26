@@ -125,7 +125,7 @@ function Right({
 
 type ToolbarLayoutCompoundComponent = ((
   props: ToolbarLayoutProps
-) => JSX.Element) & {
+) => React.JSX.Element) & {
   Left: typeof Left
   Right: typeof Right
 }

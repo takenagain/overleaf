@@ -3,14 +3,14 @@
 import settings from '@overleaf/settings'
 import logger from '@overleaf/logger'
 import { fetchJson } from '@overleaf/fetch-utils'
-import LRU from 'lru-cache'
+import { LRUCache } from 'lru-cache'
 
 /**
  * @typedef {import('../../../types/subscription/currency').CurrencyCode} CurrencyCode
  */
 
 const DEFAULT_CURRENCY_CODE = /** @type {const} */ 'USD'
-const cache = new LRU({
+const cache = new LRUCache({
   max: settings.apis.geoIpLookup.cacheSize,
 })
 

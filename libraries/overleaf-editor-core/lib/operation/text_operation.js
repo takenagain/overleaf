@@ -31,7 +31,7 @@ const TrackingProps = require('../file_data/tracking_props')
 /**
  * @import StringFileData from '../file_data/string_file_data'
  * @import { RawTextOperation, TrackingDirective } from '../types'
- * @import { ScanOp } from '../operation/scan_op'
+ * @typedef {InstanceType<typeof import('../operation/scan_op').ScanOp>} ScanOp
  * @import TrackedChangeList from '../file_data/tracked_change_list'
  *
  * @typedef {{tracking?: TrackingProps, commentIds?: string[]}} InsertOptions

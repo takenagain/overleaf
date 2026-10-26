@@ -2,7 +2,7 @@ package uk.ac.ic.wlgitbridge.bridge.repo;
 
 import static uk.ac.ic.wlgitbridge.util.Util.deleteInDirectoryApartFrom;
 
-import com.google.api.client.repackaged.com.google.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;

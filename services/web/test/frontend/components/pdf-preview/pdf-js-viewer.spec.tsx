@@ -1,8 +1,6 @@
 import { EditorProviders } from '../../helpers/editor-providers'
 import PdfJsViewer from '../../../../frontend/js/features/pdf-preview/components/pdf-js-viewer'
 import { mockScope } from './scope'
-import { getContainerEl } from 'cypress/react'
-import { unmountComponentAtNode } from 'react-dom'
 import { PdfPreviewProvider } from '../../../../frontend/js/features/pdf-preview/components/pdf-preview-provider'
 
 // Unicode directional isolates, added around placeables by @fluent/bundle/esm/resolver
@@ -78,7 +76,7 @@ describe('<PdfJSViewer/>', function () {
 
     cy.waitForCompile()
 
-    cy.then(() => unmountComponentAtNode(getContainerEl()))
+    cy.mount(<></>)
   })
 
   it('can be unmounted after loading a document', function () {
@@ -102,6 +100,6 @@ describe('<PdfJSViewer/>', function () {
       cy.findByLabelText(`Page ${FSI}1${PDI}`)
     })
 
-    cy.then(() => unmountComponentAtNode(getContainerEl()))
+    cy.mount(<></>)
   })
 })

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 
 type ExternalScriptLoaderProps = {
-  children: JSX.Element
+  children: React.JSX.Element
   src: string
 }
 

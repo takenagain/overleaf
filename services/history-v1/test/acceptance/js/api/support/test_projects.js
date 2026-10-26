@@ -1,6 +1,6 @@
 const BPromise = require('bluebird')
 const { expect } = require('chai')
-const HTTPStatus = require('http-status')
+const HTTPStatus = require('http-status').default
 const assert = require('../../../../../storage/lib/assert')
 
 const testServer = require('./test_server')

@@ -1,0 +1,57 @@
+diff --git a/index.js b/index.js
+index 060ff9db02b5836340c12839e8d5bff5348490d2..fea389ce1d217148b80825c751efff2e6876149c 100644
+--- a/index.js
++++ b/index.js
+@@ -21,8 +21,9 @@ try {
+     fs.readFileSync(path.dirname(require.resolve('mocha')) + "/package.json", "utf8")
+   );
+   var version = json.version;
+-  if (version >= "6") {
+-    createStatsCollector = require("mocha/lib/stats-collector");
++  if (parseInt(version, 10) >= 6) {
++    var stats = require("mocha/lib/stats-collector");
++    createStatsCollector = stats.createStatsCollector || stats;
+     mocha6plus = true;
+   } else {
+     mocha6plus = false;
+@@ -31,7 +32,6 @@ try {
+   // eslint-disable-next-line no-console
+   console.warn("Couldn't determine Mocha version");
+ }
+-module.exports = MochaJUnitReporter;
+ 
+ // A subset of invalid characters as defined in http://www.w3.org/TR/xml/#charsets that can occur in e.g. stacktraces
+ // regex lifted from https://github.com/MylesBorins/xml-sanitizer/ (licensed MIT)
+@@ -200,10 +200,12 @@ function getJenkinsClassname (test, options) {
+  * @param {EventEmitter} runner - the test runner
+  * @param {Object} options - mocha options
+  */
+-function MochaJUnitReporter(runner, options) {
++class MochaJUnitReporter extends Base {
++ constructor(runner, options) {
+   if (mocha6plus) {
+     createStatsCollector(runner);
+   }
++  super(runner);
+   this._options = configureDefaults(options);
+   this._runner = runner;
+   this._generateSuiteTitle = this._options.useFullSuiteTitle ? fullSuiteTitle : defaultSuiteTitle;
+@@ -218,7 +220,7 @@ function MochaJUnitReporter(runner, options) {
+   }
+ 
+   // get functionality from the Base reporter
+-  Base.call(this, runner);
++
+ 
+   // remove old results
+   this._runner.on('start', function() {
+@@ -274,7 +276,9 @@ function MochaJUnitReporter(runner, options) {
+   this._runner.on('end', function(){
+     this.flush(testsuites);
+   }.bind(this));
++ }
+ }
++module.exports = MochaJUnitReporter;
+ 
+ /**
+  * Produces an xml node for a test suite

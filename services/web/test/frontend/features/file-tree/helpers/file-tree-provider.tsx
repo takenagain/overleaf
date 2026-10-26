@@ -10,7 +10,9 @@ export const FileTreeProvider: FC<
     useState<HTMLDivElement | null>(null)
 
   const propsRef =
-    useRef<Omit<ComponentProps<typeof FileTreeContext>, 'refProviders'>>()
+    useRef<Omit<ComponentProps<typeof FileTreeContext>, 'refProviders'>>(
+      undefined
+    )
 
   if (propsRef.current === undefined) {
     propsRef.current = {

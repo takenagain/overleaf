@@ -1,5 +1,5 @@
 const chai = require('chai')
-const sinonChai = require('sinon-chai')
+const sinonChai = require('sinon-chai').default
 const SandboxedModule = require('sandboxed-module')
 
 // Chai configuration

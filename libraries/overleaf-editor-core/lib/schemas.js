@@ -261,6 +261,7 @@ const namedOriginKinds = ['restore', 'file-restore', 'project-restore']
 const rawBaseOrigin = z.strictObject({
   kind: z.string().refine(kind => !namedOriginKinds.includes(kind), {
     message: 'origin kind has a shape of its own',
+    abort: true,
   }),
   historyClientId,
 })

@@ -6,7 +6,10 @@ const modulePath =
 describe('ProjectUpdateHandler', function () {
   beforeEach(function (ctx) {
     ctx.fakeTime = new Date()
-    ctx.clock = sinon.useFakeTimers(ctx.fakeTime.getTime())
+    ctx.clock = sinon.useFakeTimers({
+      now: ctx.fakeTime.getTime(),
+      toNotFake: ['nextTick', 'queueMicrotask'],
+    })
   })
 
   afterEach(function (ctx) {

@@ -2,16 +2,15 @@ package uk.ac.ic.wlgitbridge.server;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
-import java.io.IOException;
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
+import tools.jackson.core.JsonGenerator;
 
 /** Writes log level as a bunyan-compatible numeric value. */
 public class BunyanLevelJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> {
 
   @Override
-  public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
-    generator.writeNumberField("level", toBunyanLevel(event.getLevel()));
+  public void writeTo(JsonGenerator generator, ILoggingEvent event) {
+    generator.writeNumberProperty("level", toBunyanLevel(event.getLevel()));
   }
 
   private static int toBunyanLevel(Level level) {

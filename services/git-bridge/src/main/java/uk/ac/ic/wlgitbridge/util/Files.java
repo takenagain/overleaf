@@ -1,6 +1,6 @@
 package uk.ac.ic.wlgitbridge.util;
 
-import com.google.api.client.repackaged.com.google.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;

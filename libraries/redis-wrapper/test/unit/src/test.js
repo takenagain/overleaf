@@ -56,7 +56,7 @@ describe('index', function () {
     })()
     this.redis = SandboxedModule.require(modulePath, {
       requires: {
-        ioredis: this.ioredis,
+        ioredis: { default: this.ioredis },
         '@overleaf/logger': loggerMock,
       },
       globals: {

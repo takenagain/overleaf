@@ -13,7 +13,7 @@
     "lint:fix": "eslint --cache --cache-location ../../.cache/eslint/ --fix --ext .cjs,.js,.jsx,.mjs,.ts .",
     "test:ci": "yarn run test:unit",
     "test:unit": "mocha --exit test/**/*.{js,cjs}",
-    "types:check": "tsc --noEmit"
+    "types:check": "node ../../tools/type-check.mjs --noEmit"
   },
   "author": "",
   "license": "AGPL-3.0-only",
@@ -21,14 +21,14 @@
     "lodash": "^4.18.1"
   },
   "devDependencies": {
-    "@types/node": "^24.5.2",
-    "chai": "^4.3.6",
-    "chai-as-promised": "^7.1.1",
-    "eslint": "^10.4.0",
-    "mocha": "^11.1.0",
-    "mocha-junit-reporter": "^2.2.1",
-    "mocha-multi-reporters": "^1.5.1",
+    "@types/node": "^26.6.5",
+    "chai": "^6.3.0",
+    "chai-as-promised": "^8.0.2",
+    "eslint": "^10.13.0",
+    "mocha": "^12.0.3",
+    "mocha-junit-reporter": "patch:mocha-junit-reporter@npm%3A2.2.1#~/.yarn/patches/mocha-junit-reporter-npm-2.2.1-e02a1e67a3.patch",
+    "mocha-multi-reporters": "^1.5.2",
     "sandboxed-module": "^2.0.4",
-    "typescript": "^5.0.4"
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
   }
 }

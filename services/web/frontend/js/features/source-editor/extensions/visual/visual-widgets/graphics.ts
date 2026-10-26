@@ -12,7 +12,7 @@ const pdfDestroyLock = new PdfDestroyLock()
 
 function schedulePdfDestroy(pdf: PDFDocumentProxy) {
   pdfDestroyLock.schedule(() =>
-    pdf.destroy().catch(() => {
+    pdf.loadingTask.destroy().catch(() => {
       debugConsole.warn('Failed to destroy PDFjs instance')
     })
   )
@@ -302,6 +302,7 @@ export class GraphicsWidget extends WidgetType {
     canvas.style.width = width
     canvas.style.maxWidth = width
     page.render({
+      canvas,
       canvasContext: canvas.getContext('2d')!,
       viewport,
     })

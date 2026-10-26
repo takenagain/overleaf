@@ -38,7 +38,9 @@ function FileTreeFolderList({
         classes.root
       )}
       role="tree"
-      ref={dropRef}
+      ref={node => {
+        dropRef?.(node)
+      }}
       data-testid={dataTestId}
     >
       <div className="file-tree-folder-list-inner">

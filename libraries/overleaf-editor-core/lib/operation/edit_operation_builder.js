@@ -2,7 +2,7 @@
 
 /**
  * @import EditOperation from './edit_operation'
- * @import { RawTextOperation, RawAddCommentOperation, RawEditOperation } from '../types'
+ * @import { RawTextOperation, RawAddCommentOperation, RawEditOperation, RawEditNoOperation } from '../types'
  * @import { RawDeleteCommentOperation, RawSetCommentStateOperation } from '../types'
  */
 

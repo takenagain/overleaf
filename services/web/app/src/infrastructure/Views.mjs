@@ -1,27 +1,26 @@
 import logger from '@overleaf/logger'
 import pug from 'pug'
-import globby from 'globby'
+import { globbySync } from 'globby'
 import Settings from '@overleaf/settings'
 import fs from 'node:fs'
 import Path from 'node:path'
 
 // Generate list of view names from app/views
 function buildViewList() {
-  return globby
-    .sync('app/views/**/*.pug', {
-      onlyFiles: true,
-      concurrency: 1,
-      ignore: [
-        // Ignore includes
-        '**/_*.pug',
-        '**/_*/**',
-        // Ignore shared layout files
-        'app/views/layout*',
-        'app/views/layout/*',
-      ],
-    })
+  return globbySync('app/views/**/*.pug', {
+    onlyFiles: true,
+    concurrency: 1,
+    ignore: [
+      // Ignore includes
+      '**/_*.pug',
+      '**/_*/**',
+      // Ignore shared layout files
+      'app/views/layout*',
+      'app/views/layout/*',
+    ],
+  })
     .concat(
-      globby.sync('modules/*/app/views/**/*.pug', {
+      globbySync('modules/*/app/views/**/*.pug', {
         onlyFiles: true,
         concurrency: 1,
         // Ignore includes
@@ -29,7 +28,7 @@ function buildViewList() {
       })
     )
     .concat(Object.values(Settings.viewIncludes).flat())
-    .map(x => Path.resolve(x))
+    .map((x) => Path.resolve(x))
 }
 
 const PUG_COMPILE_ARGUMENTS = {

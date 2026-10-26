@@ -1,6 +1,6 @@
 'use strict'
 
-const HTTPStatus = require('http-status')
+const HTTPStatus = require('http-status').default
 
 function makeErrorRenderer(status) {
   return (res, message) => {

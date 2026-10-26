@@ -1,38 +1,33 @@
 diff --git a/dist/index.cjs b/dist/index.cjs
-index 39215ae..b44cb76 100644
+index c8c25de..692ea43 100644
 --- a/dist/index.cjs
 +++ b/dist/index.cjs
-@@ -187,16 +187,23 @@ Helper function that returns a transaction spec which inserts a
+@@ -187,18 +187,16 @@ Helper function that returns a transaction spec which inserts a
  completion's text in the main selection range, and any other
  selection range that has the same text in front of it.
  */
 -function insertCompletionText(state$1, text, from, to) {
 +function insertCompletionText(state$1, text, from, to, extend) {
      let { main } = state$1.selection, fromOff = from - main.from, toOff = to - main.from;
-     return Object.assign(Object.assign({}, state$1.changeByRange(range => {
-         if (range != main && from != to &&
-             state$1.sliceDoc(range.from + fromOff, range.from + toOff) != state$1.sliceDoc(from, to))
-             return { range };
--        let lines = state$1.toText(text);
-+        let change = {
-+            from: range.from + fromOff,
-+            to: to == main.from ? range.to : range.from + toOff,
-+            insert: text instanceof state.Text ? text : state$1.toText(text),
-+        };
-+        if (extend) {
-+            extend(state$1, change);
-+        }
-         return {
--            changes: { from: range.from + fromOff, to: to == main.from ? range.to : range.from + toOff, insert: lines },
--            range: state.EditorSelection.cursor(range.from + fromOff + lines.length)
-+            changes: change,
-+            range: state.EditorSelection.cursor(change.from + change.insert.length)
-         };
-     })), { scrollIntoView: true, userEvent: "input.complete" });
- }
-@@ -389,7 +396,9 @@ const completionConfig = state.Facet.define({
+     return {
+         ...state$1.changeByRange(range => {
+             if (range != main && from != to &&
+                 state$1.sliceDoc(range.from + fromOff, range.from + toOff) != state$1.sliceDoc(from, to))
+                 return { range };
+-            let lines = state$1.toText(text);
+-            return {
+-                changes: { from: range.from + fromOff, to: to == main.from ? range.to : range.from + toOff, insert: lines },
+-                range: state.EditorSelection.cursor(range.from + fromOff + lines.length)
+-            };
++            let change = { from: range.from + fromOff, to: to == main.from ? range.to : range.from + toOff, insert: text instanceof state.Text ? text : state$1.toText(text) };
++            if (extend) extend(state$1, change);
++            return { changes: change, range: state.EditorSelection.cursor(change.from + change.insert.length) };
+         }),
+         scrollIntoView: true,
+         userEvent: "input.complete"
+@@ -393,7 +391,9 @@ const completionConfig = state.Facet.define({
              filterStrict: false,
-             compareCompletions: (a, b) => a.label.localeCompare(b.label),
+             compareCompletions: (a, b) => (a.sortText || a.label).localeCompare(b.sortText || b.label),
              interactionDelay: 75,
 -            updateSyncTime: 100
 +            updateSyncTime: 100,
@@ -41,15 +36,15 @@ index 39215ae..b44cb76 100644
          }, {
              defaultKeymap: (a, b) => a && b,
              closeOnBlur: (a, b) => a && b,
-@@ -744,6 +753,7 @@ function score(option) {
+@@ -769,6 +769,7 @@ function score(option) {
          (option.type ? 1 : 0);
  }
  function sortOptions(active, state) {
 +    var _a;
      let options = [];
-     let sections = null;
+     let sections = null, dynamicSectionScore = null;
      let addOption = (option) => {
-@@ -763,7 +773,8 @@ function sortOptions(active, state) {
+@@ -788,7 +789,8 @@ function sortOptions(active, state) {
              let getMatch = a.result.getMatch;
              if (a.result.filter === false) {
                  for (let option of a.result.options) {
@@ -59,7 +54,7 @@ index 39215ae..b44cb76 100644
                  }
              }
              else {
-@@ -790,15 +801,42 @@ function sortOptions(active, state) {
+@@ -826,15 +828,42 @@ function sortOptions(active, state) {
          }
      }
      let result = [], prev = null;
@@ -105,7 +100,7 @@ index 39215ae..b44cb76 100644
          prev = opt.completion;
      }
      return result;
-@@ -817,8 +855,9 @@ class CompletionDialog {
+@@ -853,8 +882,9 @@ class CompletionDialog {
              : new CompletionDialog(this.options, makeAttrs(id, selected), this.tooltip, this.timestamp, selected, this.disabled);
      }
      static build(active, state, id, prev, conf, didSetActive) {
@@ -117,23 +112,24 @@ index 39215ae..b44cb76 100644
          let options = sortOptions(active, state);
          if (!options.length)
              return prev && active.some(a => a.isPending) ? prev.setDisabled() : null;
-@@ -1017,13 +1056,14 @@ const completionState = state.StateField.define({
+@@ -1052,6 +1082,7 @@ const completionState = state.StateField.define({
          view.EditorView.contentAttributes.from(f, state => state.attrs)
      ]
  });
-+const getCompletionTooltip = (state) => { var _a; return (_a = state.field(completionState, false)) === null || _a === void 0 ? void 0 : _a.tooltip; };
++const getCompletionTooltip = state => state.field(completionState, false)?.tooltip;
  function applyCompletion(view, option) {
      const apply = option.completion.apply || option.completion.label;
      let result = view.state.field(completionState).active.find(a => a.source == option.source);
-     if (!(result instanceof ActiveResult))
+@@ -1059,7 +1090,7 @@ function applyCompletion(view, option) {
          return false;
      if (typeof apply == "string")
--        view.dispatch(Object.assign(Object.assign({}, insertCompletionText(view.state, apply, result.from, result.to)), { annotations: pickedCompletion.of(option.completion) }));
-+        view.dispatch(Object.assign(Object.assign({}, insertCompletionText(view.state, apply, result.from, result.to, option.completion.extend)), { annotations: pickedCompletion.of(option.completion) }));
+         view.dispatch({
+-            ...insertCompletionText(view.state, apply, result.from, result.to),
++            ...insertCompletionText(view.state, apply, result.from, result.to, option.completion.extend),
+             annotations: pickedCompletion.of(option.completion)
+         });
      else
-         apply(view, option.completion, result.from, result.to);
-     return true;
-@@ -1559,20 +1599,42 @@ interpreted as indicating a placeholder.
+@@ -1608,20 +1639,42 @@ interpreted as indicating a placeholder.
  function snippet(template) {
      let snippet = Snippet.parse(template);
      return (editor, completion, from, to) => {
@@ -186,7 +182,7 @@ index 39215ae..b44cb76 100644
          }
          editor.dispatch(editor.state.update(spec));
      };
-@@ -1746,7 +1808,8 @@ const completeAnyWord = context => {
+@@ -1796,7 +1849,8 @@ const completeAnyWord = context => {
  const defaults = {
      brackets: ["(", "[", "{", "'", '"'],
      before: ")]}:;>",
@@ -196,7 +192,7 @@ index 39215ae..b44cb76 100644
  };
  const closeBracketEffect = state.StateEffect.define({
      map(value, mapping) {
-@@ -1854,8 +1917,8 @@ function insertBracket(state$1, bracket) {
+@@ -1904,8 +1958,8 @@ function insertBracket(state$1, bracket) {
      for (let tok of tokens) {
          let closed = closing(state.codePointAt(tok, 0));
          if (bracket == tok)
@@ -207,7 +203,7 @@ index 39215ae..b44cb76 100644
          if (bracket == closed && closedBracketAt(state$1, state$1.selection.main.from))
              return handleClose(state$1, tok, closed);
      }
-@@ -1877,17 +1940,21 @@ function prevChar(doc, pos) {
+@@ -1927,17 +1981,21 @@ function prevChar(doc, pos) {
      let prev = doc.sliceString(pos - 2, pos);
      return state.codePointSize(state.codePointAt(prev, 0)) == prev.length ? prev : prev.slice(1);
  }
@@ -233,7 +229,7 @@ index 39215ae..b44cb76 100644
          return { range: dont = range };
      });
      return dont ? null : state$1.update(changes, {
-@@ -1909,18 +1976,36 @@ function handleClose(state$1, _open, close) {
+@@ -1959,18 +2017,36 @@ function handleClose(state$1, _open, close) {
  }
  // Handles cases where the open and close token are the same, and
  // possibly triple quotes (as in `"""abc"""`-style quoting).
@@ -274,7 +270,7 @@ index 39215ae..b44cb76 100644
                      range: state.EditorSelection.cursor(pos + token.length) };
              }
              else if (closedBracketAt(state$1, pos)) {
-@@ -1930,18 +2015,13 @@ function handleSame(state$1, token, allowTriple, config) {
+@@ -1980,18 +2056,13 @@ function handleSame(state$1, token, allowTriple, config) {
                      range: state.EditorSelection.cursor(pos + content.length) };
              }
          }
@@ -298,7 +294,7 @@ index 39215ae..b44cb76 100644
          }
          return { range: dont = range };
      });
-@@ -2086,6 +2166,7 @@ exports.completionKeymap = completionKeymap;
+@@ -2137,6 +2208,7 @@ exports.completionKeymap = completionKeymap;
  exports.completionStatus = completionStatus;
  exports.currentCompletions = currentCompletions;
  exports.deleteBracketPair = deleteBracketPair;
@@ -306,7 +302,7 @@ index 39215ae..b44cb76 100644
  exports.hasNextSnippetField = hasNextSnippetField;
  exports.hasPrevSnippetField = hasPrevSnippetField;
  exports.ifIn = ifIn;
-@@ -2093,8 +2174,10 @@ exports.ifNotIn = ifNotIn;
+@@ -2144,8 +2216,10 @@ exports.ifNotIn = ifNotIn;
  exports.insertBracket = insertBracket;
  exports.insertCompletionText = insertCompletionText;
  exports.moveCompletionSelection = moveCompletionSelection;
@@ -318,19 +314,19 @@ index 39215ae..b44cb76 100644
  exports.selectedCompletion = selectedCompletion;
  exports.selectedCompletionIndex = selectedCompletionIndex;
 diff --git a/dist/index.d.cts b/dist/index.d.cts
-index b57b8f6..fce47ab 100644
+index 5c9885e..64c1296 100644
 --- a/dist/index.d.cts
 +++ b/dist/index.d.cts
 @@ -1,6 +1,6 @@
  import * as _codemirror_state from '@codemirror/state';
--import { EditorState, ChangeDesc, TransactionSpec, Transaction, StateCommand, Facet, Extension, StateEffect } from '@codemirror/state';
+-import { EditorState, ChangeDesc, TransactionSpec, StateCommand, Transaction, Facet, Extension, StateEffect } from '@codemirror/state';
 -import { EditorView, Rect, KeyBinding, Command } from '@codemirror/view';
 +import { EditorState, Text, ChangeDesc, TransactionSpec, StateCommand, Transaction, Facet, SelectionRange, Extension, StateEffect } from '@codemirror/state';
 +import { EditorView, Rect, KeyBinding, Tooltip, Command } from '@codemirror/view';
  import * as _lezer_common from '@lezer/common';
  
  /**
-@@ -73,6 +73,19 @@ interface Completion {
+@@ -78,6 +78,19 @@ interface Completion {
      a `{name}` object.
      */
      section?: string | CompletionSection;
@@ -350,7 +346,7 @@ index b57b8f6..fce47ab 100644
  }
  /**
  The type returned from
-@@ -306,12 +319,17 @@ This annotation is added to transactions that are produced by
+@@ -315,12 +328,17 @@ This annotation is added to transactions that are produced by
  picking a completion.
  */
  declare const pickedCompletion: _codemirror_state.AnnotationType<Completion>;
@@ -369,7 +365,7 @@ index b57b8f6..fce47ab 100644
  
  interface CompletionConfig {
      /**
-@@ -441,6 +459,10 @@ interface CompletionConfig {
+@@ -450,6 +468,10 @@ interface CompletionConfig {
      milliseconds.
      */
      updateSyncTime?: number;
@@ -380,7 +376,7 @@ index b57b8f6..fce47ab 100644
  }
  
  /**
-@@ -514,6 +536,8 @@ applies the snippet.
+@@ -524,6 +546,8 @@ applies the snippet.
  */
  declare function snippetCompletion(template: string, completion: Completion): Completion;
  
@@ -389,7 +385,7 @@ index b57b8f6..fce47ab 100644
  /**
  Returns a command that moves the completion selection forward or
  backward by the given amount.
-@@ -562,6 +586,11 @@ interface CloseBracketConfig {
+@@ -572,6 +596,11 @@ interface CloseBracketConfig {
      these prefixes before the opening quote.
      */
      stringPrefixes?: string[];
@@ -401,7 +397,7 @@ index b57b8f6..fce47ab 100644
  }
  /**
  Extension to enable bracket-closing behavior. When a closeable
-@@ -593,6 +622,8 @@ to programmatically insert brackets—the
+@@ -603,6 +632,8 @@ to programmatically insert brackets—the
  take care of running this for user input.)
  */
  declare function insertBracket(state: EditorState, bracket: string): Transaction | null;
@@ -410,27 +406,27 @@ index b57b8f6..fce47ab 100644
  
  /**
  Returns an extension that enables autocompletion.
-@@ -636,4 +667,5 @@ the currently selected completion.
+@@ -646,5 +677,5 @@ the currently selected completion.
  */
  declare function setSelectedCompletion(index: number): StateEffect<unknown>;
  
--export { type CloseBracketConfig, type Completion, CompletionContext, type CompletionInfo, type CompletionResult, type CompletionSection, type CompletionSource, acceptCompletion, autocompletion, clearSnippet, closeBrackets, closeBracketsKeymap, closeCompletion, completeAnyWord, completeFromList, completionKeymap, completionStatus, currentCompletions, deleteBracketPair, hasNextSnippetField, hasPrevSnippetField, ifIn, ifNotIn, insertBracket, insertCompletionText, moveCompletionSelection, nextSnippetField, pickedCompletion, prevSnippetField, selectedCompletion, selectedCompletionIndex, setSelectedCompletion, snippet, snippetCompletion, snippetKeymap, startCompletion };
+-export { CompletionContext, acceptCompletion, autocompletion, clearSnippet, closeBrackets, closeBracketsKeymap, closeCompletion, completeAnyWord, completeFromList, completionKeymap, completionStatus, currentCompletions, deleteBracketPair, hasNextSnippetField, hasPrevSnippetField, ifIn, ifNotIn, insertBracket, insertCompletionText, moveCompletionSelection, nextSnippetField, pickedCompletion, prevSnippetField, selectedCompletion, selectedCompletionIndex, setSelectedCompletion, snippet, snippetCompletion, snippetKeymap, startCompletion };
 +export { CompletionContext, acceptCompletion, autocompletion, clearSnippet, closeBrackets, closeBracketsKeymap, closeCompletion, completeAnyWord, completeFromList, completionKeymap, completionStatus, currentCompletions, deleteBracketPair, getCompletionTooltip, hasNextSnippetField, hasPrevSnippetField, ifIn, ifNotIn, insertBracket, insertCompletionText, moveCompletionSelection, nextChar, nextSnippetField, pickedCompletion, prevChar, prevSnippetField, selectedCompletion, selectedCompletionIndex, setSelectedCompletion, snippet, snippetCompletion, snippetKeymap, startCompletion };
-+export type { CloseBracketConfig, Completion, CompletionInfo, CompletionResult, CompletionSection, CompletionSource };
+ export type { CloseBracketConfig, Completion, CompletionInfo, CompletionResult, CompletionSection, CompletionSource };
 diff --git a/dist/index.d.ts b/dist/index.d.ts
-index b57b8f6..fce47ab 100644
+index 5c9885e..64c1296 100644
 --- a/dist/index.d.ts
 +++ b/dist/index.d.ts
 @@ -1,6 +1,6 @@
  import * as _codemirror_state from '@codemirror/state';
--import { EditorState, ChangeDesc, TransactionSpec, Transaction, StateCommand, Facet, Extension, StateEffect } from '@codemirror/state';
+-import { EditorState, ChangeDesc, TransactionSpec, StateCommand, Transaction, Facet, Extension, StateEffect } from '@codemirror/state';
 -import { EditorView, Rect, KeyBinding, Command } from '@codemirror/view';
 +import { EditorState, Text, ChangeDesc, TransactionSpec, StateCommand, Transaction, Facet, SelectionRange, Extension, StateEffect } from '@codemirror/state';
 +import { EditorView, Rect, KeyBinding, Tooltip, Command } from '@codemirror/view';
  import * as _lezer_common from '@lezer/common';
  
  /**
-@@ -73,6 +73,19 @@ interface Completion {
+@@ -78,6 +78,19 @@ interface Completion {
      a `{name}` object.
      */
      section?: string | CompletionSection;
@@ -450,7 +446,7 @@ index b57b8f6..fce47ab 100644
  }
  /**
  The type returned from
-@@ -306,12 +319,17 @@ This annotation is added to transactions that are produced by
+@@ -315,12 +328,17 @@ This annotation is added to transactions that are produced by
  picking a completion.
  */
  declare const pickedCompletion: _codemirror_state.AnnotationType<Completion>;
@@ -469,7 +465,7 @@ index b57b8f6..fce47ab 100644
  
  interface CompletionConfig {
      /**
-@@ -441,6 +459,10 @@ interface CompletionConfig {
+@@ -450,6 +468,10 @@ interface CompletionConfig {
      milliseconds.
      */
      updateSyncTime?: number;
@@ -480,7 +476,7 @@ index b57b8f6..fce47ab 100644
  }
  
  /**
-@@ -514,6 +536,8 @@ applies the snippet.
+@@ -524,6 +546,8 @@ applies the snippet.
  */
  declare function snippetCompletion(template: string, completion: Completion): Completion;
  
@@ -489,7 +485,7 @@ index b57b8f6..fce47ab 100644
  /**
  Returns a command that moves the completion selection forward or
  backward by the given amount.
-@@ -562,6 +586,11 @@ interface CloseBracketConfig {
+@@ -572,6 +596,11 @@ interface CloseBracketConfig {
      these prefixes before the opening quote.
      */
      stringPrefixes?: string[];
@@ -501,7 +497,7 @@ index b57b8f6..fce47ab 100644
  }
  /**
  Extension to enable bracket-closing behavior. When a closeable
-@@ -593,6 +622,8 @@ to programmatically insert brackets—the
+@@ -603,6 +632,8 @@ to programmatically insert brackets—the
  take care of running this for user input.)
  */
  declare function insertBracket(state: EditorState, bracket: string): Transaction | null;
@@ -510,54 +506,43 @@ index b57b8f6..fce47ab 100644
  
  /**
  Returns an extension that enables autocompletion.
-@@ -636,4 +667,5 @@ the currently selected completion.
+@@ -646,5 +677,5 @@ the currently selected completion.
  */
  declare function setSelectedCompletion(index: number): StateEffect<unknown>;
  
--export { type CloseBracketConfig, type Completion, CompletionContext, type CompletionInfo, type CompletionResult, type CompletionSection, type CompletionSource, acceptCompletion, autocompletion, clearSnippet, closeBrackets, closeBracketsKeymap, closeCompletion, completeAnyWord, completeFromList, completionKeymap, completionStatus, currentCompletions, deleteBracketPair, hasNextSnippetField, hasPrevSnippetField, ifIn, ifNotIn, insertBracket, insertCompletionText, moveCompletionSelection, nextSnippetField, pickedCompletion, prevSnippetField, selectedCompletion, selectedCompletionIndex, setSelectedCompletion, snippet, snippetCompletion, snippetKeymap, startCompletion };
+-export { CompletionContext, acceptCompletion, autocompletion, clearSnippet, closeBrackets, closeBracketsKeymap, closeCompletion, completeAnyWord, completeFromList, completionKeymap, completionStatus, currentCompletions, deleteBracketPair, hasNextSnippetField, hasPrevSnippetField, ifIn, ifNotIn, insertBracket, insertCompletionText, moveCompletionSelection, nextSnippetField, pickedCompletion, prevSnippetField, selectedCompletion, selectedCompletionIndex, setSelectedCompletion, snippet, snippetCompletion, snippetKeymap, startCompletion };
 +export { CompletionContext, acceptCompletion, autocompletion, clearSnippet, closeBrackets, closeBracketsKeymap, closeCompletion, completeAnyWord, completeFromList, completionKeymap, completionStatus, currentCompletions, deleteBracketPair, getCompletionTooltip, hasNextSnippetField, hasPrevSnippetField, ifIn, ifNotIn, insertBracket, insertCompletionText, moveCompletionSelection, nextChar, nextSnippetField, pickedCompletion, prevChar, prevSnippetField, selectedCompletion, selectedCompletionIndex, setSelectedCompletion, snippet, snippetCompletion, snippetKeymap, startCompletion };
-+export type { CloseBracketConfig, Completion, CompletionInfo, CompletionResult, CompletionSection, CompletionSource };
+ export type { CloseBracketConfig, Completion, CompletionInfo, CompletionResult, CompletionSection, CompletionSource };
 diff --git a/dist/index.js b/dist/index.js
-index 4729223..9361a53 100644
+index c37c3c8..68fce89 100644
 --- a/dist/index.js
 +++ b/dist/index.js
-@@ -1,4 +1,4 @@
--import { Annotation, StateEffect, EditorSelection, codePointAt, codePointSize, fromCodePoint, Facet, combineConfig, StateField, Prec, Text, Transaction, MapMode, RangeValue, RangeSet, CharCategory } from '@codemirror/state';
-+import { Annotation, StateEffect, Text, EditorSelection, codePointAt, codePointSize, fromCodePoint, Facet, combineConfig, StateField, Prec, Transaction, MapMode, RangeValue, RangeSet, CharCategory } from '@codemirror/state';
- import { Direction, logException, showTooltip, EditorView, ViewPlugin, getTooltip, Decoration, WidgetType, keymap } from '@codemirror/view';
- import { syntaxTree, indentUnit } from '@codemirror/language';
- 
-@@ -185,16 +185,23 @@ Helper function that returns a transaction spec which inserts a
+@@ -185,18 +185,16 @@ Helper function that returns a transaction spec which inserts a
  completion's text in the main selection range, and any other
  selection range that has the same text in front of it.
  */
 -function insertCompletionText(state, text, from, to) {
 +function insertCompletionText(state, text, from, to, extend) {
      let { main } = state.selection, fromOff = from - main.from, toOff = to - main.from;
-     return Object.assign(Object.assign({}, state.changeByRange(range => {
-         if (range != main && from != to &&
-             state.sliceDoc(range.from + fromOff, range.from + toOff) != state.sliceDoc(from, to))
-             return { range };
--        let lines = state.toText(text);
-+        let change = {
-+            from: range.from + fromOff,
-+            to: to == main.from ? range.to : range.from + toOff,
-+            insert: text instanceof Text ? text : state.toText(text),
-+        };
-+        if (extend) {
-+            extend(state, change);
-+        }
-         return {
--            changes: { from: range.from + fromOff, to: to == main.from ? range.to : range.from + toOff, insert: lines },
--            range: EditorSelection.cursor(range.from + fromOff + lines.length)
-+            changes: change,
-+            range: EditorSelection.cursor(change.from + change.insert.length)
-         };
-     })), { scrollIntoView: true, userEvent: "input.complete" });
- }
-@@ -387,7 +394,9 @@ const completionConfig = /*@__PURE__*/Facet.define({
+     return {
+         ...state.changeByRange(range => {
+             if (range != main && from != to &&
+                 state.sliceDoc(range.from + fromOff, range.from + toOff) != state.sliceDoc(from, to))
+                 return { range };
+-            let lines = state.toText(text);
+-            return {
+-                changes: { from: range.from + fromOff, to: to == main.from ? range.to : range.from + toOff, insert: lines },
+-                range: EditorSelection.cursor(range.from + fromOff + lines.length)
+-            };
++            let change = { from: range.from + fromOff, to: to == main.from ? range.to : range.from + toOff, insert: text instanceof Text ? text : state.toText(text) };
++            if (extend) extend(state, change);
++            return { changes: change, range: EditorSelection.cursor(change.from + change.insert.length) };
+         }),
+         scrollIntoView: true,
+         userEvent: "input.complete"
+@@ -391,7 +389,9 @@ const completionConfig = /*@__PURE__*/Facet.define({
              filterStrict: false,
-             compareCompletions: (a, b) => a.label.localeCompare(b.label),
+             compareCompletions: (a, b) => (a.sortText || a.label).localeCompare(b.sortText || b.label),
              interactionDelay: 75,
 -            updateSyncTime: 100
 +            updateSyncTime: 100,
@@ -566,15 +551,15 @@ index 4729223..9361a53 100644
          }, {
              defaultKeymap: (a, b) => a && b,
              closeOnBlur: (a, b) => a && b,
-@@ -742,6 +751,7 @@ function score(option) {
+@@ -767,6 +767,7 @@ function score(option) {
          (option.type ? 1 : 0);
  }
  function sortOptions(active, state) {
 +    var _a;
      let options = [];
-     let sections = null;
+     let sections = null, dynamicSectionScore = null;
      let addOption = (option) => {
-@@ -761,7 +771,8 @@ function sortOptions(active, state) {
+@@ -786,7 +787,8 @@ function sortOptions(active, state) {
              let getMatch = a.result.getMatch;
              if (a.result.filter === false) {
                  for (let option of a.result.options) {
@@ -584,7 +569,7 @@ index 4729223..9361a53 100644
                  }
              }
              else {
-@@ -788,15 +799,42 @@ function sortOptions(active, state) {
+@@ -824,15 +826,42 @@ function sortOptions(active, state) {
          }
      }
      let result = [], prev = null;
@@ -630,7 +615,7 @@ index 4729223..9361a53 100644
          prev = opt.completion;
      }
      return result;
-@@ -815,8 +853,9 @@ class CompletionDialog {
+@@ -851,8 +880,9 @@ class CompletionDialog {
              : new CompletionDialog(this.options, makeAttrs(id, selected), this.tooltip, this.timestamp, selected, this.disabled);
      }
      static build(active, state, id, prev, conf, didSetActive) {
@@ -642,23 +627,24 @@ index 4729223..9361a53 100644
          let options = sortOptions(active, state);
          if (!options.length)
              return prev && active.some(a => a.isPending) ? prev.setDisabled() : null;
-@@ -1015,13 +1054,14 @@ const completionState = /*@__PURE__*/StateField.define({
+@@ -1050,6 +1080,7 @@ const completionState = /*@__PURE__*/StateField.define({
          EditorView.contentAttributes.from(f, state => state.attrs)
      ]
  });
-+const getCompletionTooltip = (state) => { var _a; return (_a = state.field(completionState, false)) === null || _a === void 0 ? void 0 : _a.tooltip; };
++const getCompletionTooltip = state => state.field(completionState, false)?.tooltip;
  function applyCompletion(view, option) {
      const apply = option.completion.apply || option.completion.label;
      let result = view.state.field(completionState).active.find(a => a.source == option.source);
-     if (!(result instanceof ActiveResult))
+@@ -1057,7 +1088,7 @@ function applyCompletion(view, option) {
          return false;
      if (typeof apply == "string")
--        view.dispatch(Object.assign(Object.assign({}, insertCompletionText(view.state, apply, result.from, result.to)), { annotations: pickedCompletion.of(option.completion) }));
-+        view.dispatch(Object.assign(Object.assign({}, insertCompletionText(view.state, apply, result.from, result.to, option.completion.extend)), { annotations: pickedCompletion.of(option.completion) }));
+         view.dispatch({
+-            ...insertCompletionText(view.state, apply, result.from, result.to),
++            ...insertCompletionText(view.state, apply, result.from, result.to, option.completion.extend),
+             annotations: pickedCompletion.of(option.completion)
+         });
      else
-         apply(view, option.completion, result.from, result.to);
-     return true;
-@@ -1557,20 +1597,42 @@ interpreted as indicating a placeholder.
+@@ -1606,20 +1637,42 @@ interpreted as indicating a placeholder.
  function snippet(template) {
      let snippet = Snippet.parse(template);
      return (editor, completion, from, to) => {
@@ -711,7 +697,7 @@ index 4729223..9361a53 100644
          }
          editor.dispatch(editor.state.update(spec));
      };
-@@ -1744,7 +1806,8 @@ const completeAnyWord = context => {
+@@ -1794,7 +1847,8 @@ const completeAnyWord = context => {
  const defaults = {
      brackets: ["(", "[", "{", "'", '"'],
      before: ")]}:;>",
@@ -721,7 +707,7 @@ index 4729223..9361a53 100644
  };
  const closeBracketEffect = /*@__PURE__*/StateEffect.define({
      map(value, mapping) {
-@@ -1852,8 +1915,8 @@ function insertBracket(state, bracket) {
+@@ -1902,8 +1956,8 @@ function insertBracket(state, bracket) {
      for (let tok of tokens) {
          let closed = closing(codePointAt(tok, 0));
          if (bracket == tok)
@@ -732,7 +718,7 @@ index 4729223..9361a53 100644
          if (bracket == closed && closedBracketAt(state, state.selection.main.from))
              return handleClose(state, tok, closed);
      }
-@@ -1875,17 +1938,21 @@ function prevChar(doc, pos) {
+@@ -1925,17 +1979,21 @@ function prevChar(doc, pos) {
      let prev = doc.sliceString(pos - 2, pos);
      return codePointSize(codePointAt(prev, 0)) == prev.length ? prev : prev.slice(1);
  }
@@ -758,7 +744,7 @@ index 4729223..9361a53 100644
          return { range: dont = range };
      });
      return dont ? null : state.update(changes, {
-@@ -1907,18 +1974,36 @@ function handleClose(state, _open, close) {
+@@ -1957,18 +2015,36 @@ function handleClose(state, _open, close) {
  }
  // Handles cases where the open and close token are the same, and
  // possibly triple quotes (as in `"""abc"""`-style quoting).
@@ -799,7 +785,7 @@ index 4729223..9361a53 100644
                      range: EditorSelection.cursor(pos + token.length) };
              }
              else if (closedBracketAt(state, pos)) {
-@@ -1928,18 +2013,13 @@ function handleSame(state, token, allowTriple, config) {
+@@ -1978,18 +2054,13 @@ function handleSame(state, token, allowTriple, config) {
                      range: EditorSelection.cursor(pos + content.length) };
              }
          }
@@ -823,7 +809,7 @@ index 4729223..9361a53 100644
          }
          return { range: dont = range };
      });
-@@ -2071,4 +2151,4 @@ function setSelectedCompletion(index) {
+@@ -2122,4 +2193,4 @@ function setSelectedCompletion(index) {
      return setSelectedEffect.of(index);
  }
  

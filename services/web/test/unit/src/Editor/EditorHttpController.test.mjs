@@ -5,6 +5,10 @@ import Errors from '../../../../app/src/Features/Errors/Errors.js'
 import MockRequest from '../helpers/MockRequest.mjs'
 import MockResponse from '../helpers/MockResponse.mjs'
 
+vi.mock('../../../../app/src/Features/Errors/Errors.js', () =>
+  vi.importActual('../../../../app/src/Features/Errors/Errors.js')
+)
+
 const { ObjectId } = mongodb
 
 const MODULE_PATH =
@@ -183,9 +187,6 @@ describe('EditorHttpController', function () {
     }
     ctx.UserGetter = { promises: { getUser: sinon.stub().resolves(null, {}) } }
 
-    vi.mock('../../../../app/src/Features/Errors/Errors.js', () =>
-      vi.importActual('../../../../app/src/Features/Errors/Errors.js')
-    )
     vi.doMock(
       '../../../../app/src/Features/Project/ProjectDeleter.mjs',
       () => ({
@@ -292,7 +293,7 @@ describe('EditorHttpController', function () {
 
     describe('successfully', function () {
       beforeEach(async function (ctx) {
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
           sinon
             .stub(
               ctx.CollaboratorsGetter.ProjectAccess.prototype,
@@ -338,7 +339,7 @@ describe('EditorHttpController', function () {
 
     describe('when the project is marked as deleted', function () {
       beforeEach(async function (ctx) {
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
           ctx.projectView.deletedByExternalDataSource = true
           ctx.res.callback = resolve
           ctx.EditorHttpController.joinProject(ctx.req, ctx.res)
@@ -361,7 +362,7 @@ describe('EditorHttpController', function () {
         ctx.AuthorizationManager.promises.getPrivilegeLevelForProjectWithProjectAccess.resolves(
           'readOnly'
         )
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
           ctx.res.callback = resolve
           ctx.EditorHttpController.joinProject(ctx.req, ctx.res)
         })
@@ -403,7 +404,7 @@ describe('EditorHttpController', function () {
         ctx.AuthorizationManager.promises.getPrivilegeLevelForProjectWithProjectAccess.resolves(
           'readOnly'
         )
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
           ctx.res.callback = resolve
           ctx.EditorHttpController.joinProject(ctx.req, ctx.res)
         })
@@ -420,7 +421,7 @@ describe('EditorHttpController', function () {
 
     describe('when not authorized', function () {
       beforeEach(async function (ctx) {
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
           ctx.AuthorizationManager.promises.getPrivilegeLevelForProjectWithProjectAccess.resolves(
             null
           )
@@ -451,7 +452,7 @@ describe('EditorHttpController', function () {
         ctx.AuthorizationManager.promises.getPrivilegeLevelForProjectWithProjectAccess
           .withArgs(null, ctx.project._id.toString(), ctx.token)
           .resolves('readOnly')
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
           ctx.res.callback = resolve
           ctx.EditorHttpController.joinProject(ctx.req, ctx.res)
         })
@@ -476,7 +477,7 @@ describe('EditorHttpController', function () {
 
     describe('with a token access user', function () {
       beforeEach(async function (ctx) {
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
           sinon
             .stub(
               ctx.CollaboratorsGetter.ProjectAccess.prototype,
@@ -511,7 +512,7 @@ describe('EditorHttpController', function () {
     describe('when project is not found', function () {
       beforeEach(async function (ctx) {
         ctx.ProjectGetter.promises.getProject.resolves(null)
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
           ctx.next.callsFake(() => resolve())
           ctx.EditorHttpController.joinProject(ctx.req, ctx.res, ctx.next)
         })
@@ -536,7 +537,7 @@ describe('EditorHttpController', function () {
 
     describe('successfully', function () {
       beforeEach(async function (ctx) {
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
           ctx.res.callback = resolve
           ctx.EditorHttpController.addDoc(ctx.req, ctx.res)
         })
@@ -560,7 +561,7 @@ describe('EditorHttpController', function () {
 
     describe('unsuccesfully', function () {
       it('handle name too short', async function (ctx) {
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
           ctx.req.body.name = ''
           ctx.res.callback = () => {
             expect(ctx.res.statusCode).to.equal(400)
@@ -574,7 +575,7 @@ describe('EditorHttpController', function () {
         ctx.EditorController.promises.addDoc.rejects(
           new Errors.TooManyFilesError('project_has_too_many_files')
         )
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
           ctx.res.callback = () => {
             expect(ctx.res.body).to.equal('"project_has_too_many_files_limit"')
             expect(ctx.res.status).toHaveBeenCalledWith(400)
@@ -598,7 +599,7 @@ describe('EditorHttpController', function () {
 
     describe('successfully', function () {
       beforeEach(async function (ctx) {
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
           ctx.res.callback = resolve
           ctx.EditorHttpController.addFolder(ctx.req, ctx.res)
         })
@@ -620,7 +621,7 @@ describe('EditorHttpController', function () {
 
     describe('unsuccesfully', function () {
       it('handle name too short', async function (ctx) {
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
           ctx.req.body.name = ''
           ctx.res.callback = () => {
             expect(ctx.res.statusCode).to.equal(400)
@@ -631,7 +632,7 @@ describe('EditorHttpController', function () {
       })
 
       it('handle too many files', async function (ctx) {
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
           ctx.EditorController.promises.addFolder.rejects(
             new Errors.TooManyFilesError('project_has_too_many_files')
           )
@@ -645,7 +646,7 @@ describe('EditorHttpController', function () {
       })
 
       it('handle invalid element name', async function (ctx) {
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
           ctx.EditorController.promises.addFolder.rejects(
             new Error('invalid element name')
           )
@@ -674,7 +675,7 @@ describe('EditorHttpController', function () {
 
     describe('successfully', function () {
       beforeEach(async function (ctx) {
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
           ctx.newName = 'new-name'
           ctx.req.body = { name: ctx.newName, source: ctx.source }
           ctx.res.callback = resolve
@@ -726,7 +727,7 @@ describe('EditorHttpController', function () {
 
   describe('moveEntity', function () {
     beforeEach(async function (ctx) {
-      await new Promise(resolve => {
+      await new Promise((resolve) => {
         // entity_id/folder_id are validated as Mongo ObjectIds; entity_type
         // as an enum
         ctx.entityId = new ObjectId().toString()
@@ -766,7 +767,7 @@ describe('EditorHttpController', function () {
   ]) {
     describe(name, function () {
       beforeEach(async function (ctx) {
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
           // entity_id is validated as a Mongo ObjectId
           ctx.entityId = new ObjectId().toString()
           ctx.req.params = {

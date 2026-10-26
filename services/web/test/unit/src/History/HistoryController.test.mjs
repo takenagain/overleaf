@@ -4,6 +4,10 @@ import { RequestFailedError } from '@overleaf/fetch-utils'
 import Errors from '../../../../app/src/Features/Errors/Errors.js'
 import mongodb from 'mongodb-legacy'
 
+vi.mock('../../../../app/src/Features/Errors/Errors.js', () =>
+  vi.importActual('../../../../app/src/Features/Errors/Errors.js')
+)
+
 const { ObjectId } = mongodb
 
 const modulePath = '../../../../app/src/Features/History/HistoryController.mjs'
@@ -49,10 +53,6 @@ describe('HistoryController', function () {
       .stub()
       .resolves({ stream: ctx.stream, response: ctx.fetchResponse })
     ctx.fetchNothing = sinon.stub().resolves()
-
-    vi.mock('../../../../app/src/Features/Errors/Errors.js', () =>
-      vi.importActual('../../../../app/src/Features/Errors/Errors.js')
-    )
 
     vi.doMock('stream/promises', () => ctx.Stream)
 
@@ -678,7 +678,7 @@ describe('HistoryController', function () {
 
       it('should forward the range request', function (ctx) {
         ctx.HistoryManager.promises.requestBlobWithProjectId.should.have.been.calledWith(
-          sinon.match(val => val.toString() === ctx.project_id),
+          sinon.match((val) => val.toString() === ctx.project_id),
           ctx.blobHash,
           'GET',
           'bytes=0-42'

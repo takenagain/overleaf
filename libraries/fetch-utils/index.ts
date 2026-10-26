@@ -14,7 +14,8 @@ type BasicAuthOptions = {
   password: string
 }
 
-type FetchRequestOptions = RequestInit & {
+type FetchRequestOptions = Omit<RequestInit, 'signal'> & {
+  signal?: AbortSignal | null
   json?: unknown
   basicAuth?: BasicAuthOptions
 }
@@ -88,7 +89,7 @@ async function fetchStreamWithResponse(
 
   abortOnDestroyedResponse(abortController, response)
 
-  const stream = response.body
+  const stream = response.body ?? Readable.from([])
   return { stream, response }
 }
 
@@ -147,7 +148,7 @@ async function fetchRedirectWithResponse(
     )
   }
   await discardResponseBody(response)
-  return { location, response }
+  return { location: new URL(location, url).toString(), response }
 }
 
 /**
@@ -329,7 +330,7 @@ function abortOnDestroyedResponse(
   abortController: AbortController,
   response: Response
 ) {
-  response.body.on('close', () => {
+  response.body?.on('close', () => {
     if (!response.bodyUsed) {
       abortController.abort()
     }
@@ -354,21 +355,30 @@ async function performRequest(
       method: fetchOpts.method ?? 'GET',
     })
   }
-  response.body.on('close', detachSignal)
+  if (response.body) {
+    response.body.on('close', detachSignal)
+  } else {
+    detachSignal()
+  }
   if (fetchOpts.body instanceof Readable) {
     const requestBodyStream = fetchOpts.body
-    response.body.on('close', () => {
+    const destroyUnconsumedRequest = () => {
       if (!requestBodyStream.readableEnded) {
         requestBodyStream.destroy()
       }
-    })
+    }
+    if (response.body) {
+      response.body.on('close', destroyUnconsumedRequest)
+    } else {
+      destroyUnconsumedRequest()
+    }
   }
   return response
 }
 
 async function discardResponseBody(response: Response) {
   // eslint-disable-next-line no-unused-vars
-  for await (const chunk of response.body) {
+  for await (const chunk of response.body ?? []) {
     // discard the body
   }
 }

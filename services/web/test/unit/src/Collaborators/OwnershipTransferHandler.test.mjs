@@ -4,6 +4,10 @@ import PrivilegeLevels from '../../../../app/src/Features/Authorization/Privileg
 import Errors from '../../../../app/src/Features/Errors/Errors.js'
 import mongodb from 'mongodb-legacy'
 
+vi.mock('../../../../app/src/Features/Errors/Errors.js', () =>
+  vi.importActual('../../../../app/src/Features/Errors/Errors.js')
+)
+
 const { ObjectId } = mongodb
 
 const MODULE_PATH =
@@ -92,10 +96,6 @@ describe('OwnershipTransferHandler', function () {
         },
       },
     }
-
-    vi.mock('../../../../app/src/Features/Errors/Errors.js', () =>
-      vi.importActual('../../../../app/src/Features/Errors/Errors.js')
-    )
 
     vi.doMock('../../../../app/src/Features/Project/ProjectGetter.mjs', () => ({
       default: ctx.ProjectGetter,
@@ -697,7 +697,7 @@ describe('OwnershipTransferHandler', function () {
         ).to.have.been.calledWith(
           toUserId,
           tag._id,
-          projects.map(p => p._id)
+          projects.map((p) => p._id)
         )
       })
     })

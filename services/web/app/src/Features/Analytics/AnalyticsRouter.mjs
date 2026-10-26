@@ -21,7 +21,7 @@ const rateLimiters = {
 export default {
   apply(webRouter, privateApiRouter, publicApiRouter) {
     webRouter.post(
-      '/event/:event([a-z0-9-_]+)',
+      /^\/event\/(?<event>[a-z0-9-_]+)\/?$/i,
       RateLimiterMiddleware.rateLimit(rateLimiters.recordEvent),
       AnalyticsController.recordEvent
     )

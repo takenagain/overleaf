@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import cheerio from 'cheerio'
+import * as cheerio from 'cheerio'
 import path from 'node:path'
 
 import EmailMessageHelper from '../../../../app/src/Features/Email/EmailMessageHelper.mjs'

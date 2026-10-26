@@ -1,22 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { findDOMNode } from 'react-dom'
 
 export default function useDropdown(defaultOpen = false) {
   const [open, setOpen] = useState(defaultOpen)
 
   // store the dropdown node for use in the "click outside" event listener
-  const ref = useRef<ReturnType<typeof findDOMNode>>(null)
+  const ref = useRef<HTMLElement | null>(null)
 
-  // react-bootstrap v0.x passes `component` instead of `node` to the ref callback
-  const handleRef = useCallback(
-    (component: any) => {
-      if (component) {
-        // eslint-disable-next-line react/no-find-dom-node
-        ref.current = findDOMNode(component)
-      }
-    },
-    [ref]
-  )
+  const handleRef = useCallback((node: HTMLElement | null) => {
+    ref.current = node
+  }, [])
 
   // prevent a click on the dropdown toggle propagating to the original handler
   const handleClick = useCallback((event: any) => {

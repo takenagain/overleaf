@@ -3,7 +3,7 @@
 const _ = require('lodash')
 const Path = require('node:path')
 const Stream = require('node:stream')
-const HTTPStatus = require('http-status')
+const HTTPStatus = require('http-status').default
 const fs = require('node:fs')
 const { promisify } = require('node:util')
 const config = require('config')

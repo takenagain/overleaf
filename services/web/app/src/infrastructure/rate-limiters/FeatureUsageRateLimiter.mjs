@@ -87,6 +87,7 @@ export default class FeatureUsageRateLimiter {
       {
         new: true,
         upsert: true,
+        updatePipeline: true,
       }
     ).exec()
 
@@ -165,6 +166,7 @@ export default class FeatureUsageRateLimiter {
       {
         new: true,
         upsert: true,
+        updatePipeline: true,
       }
     ).exec()
 

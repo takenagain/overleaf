@@ -1,6 +1,26 @@
-diff --git a/lib/lockdown.js b/lib/lockdown.js
+diff --git a/lib/application.js b/lib/application.js
+index 310e6df..ddd361b 100644
+--- a/lib/application.js
++++ b/lib/application.js
+@@ -24,6 +24,7 @@ var compileTrust = require('./utils').compileTrust;
+ var resolve = require('node:path').resolve;
+ var once = require('once')
+ var Router = require('router');
++var lockdown = require('./lockdown');
+ 
+ /**
+  * Module variables.
+@@ -168,6 +169,7 @@ app.handle = function handle(req, res, callback) {
+   // alter the prototypes
+   Object.setPrototypeOf(req, this.request)
+   Object.setPrototypeOf(res, this.response)
++  lockdown.install(req);
+ 
+   // setup locals
+   if (!res.locals) {
+diff --git a/b/lib/lockdown.js b/lib/lockdown.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..7acc55484421812ddb66edf015cdf0e1125b1cab
+index 0000000..c851f39
 --- /dev/null
 +++ b/lib/lockdown.js
 @@ -0,0 +1,157 @@
@@ -113,7 +133,7 @@ index 0000000000000000000000000000000000000000..7acc55484421812ddb66edf015cdf0e1
 +
 +function lockField(req, field, symbol) {
 +  // preserve a value assigned before lockdown was installed
-+  if (Object.prototype.hasOwnProperty.call(req, field)) {
++  if (field === 'query' || Object.prototype.hasOwnProperty.call(req, field)) {
 +    req[symbol] = req[field];
 +    delete req[field];
 +  }
@@ -161,127 +181,21 @@ index 0000000000000000000000000000000000000000..7acc55484421812ddb66edf015cdf0e1
 +  getQuery: getQuery,
 +  paramsProp: paramsProp,
 +};
-diff --git a/lib/middleware/init.js b/lib/middleware/init.js
-index dfd042747bdb971d9760e9575241ddaa1b776cd8..162ec6da452bde5f5384d3d5bd79d5727742ed8f 100644
---- a/lib/middleware/init.js
-+++ b/lib/middleware/init.js
-@@ -14,6 +14,7 @@
-  */
- 
- var setPrototypeOf = require('setprototypeof')
-+var lockdown = require('../lockdown')
- 
- /**
-  * Initialization middleware, exposing the
-@@ -27,6 +28,7 @@ var setPrototypeOf = require('setprototypeof')
- 
- exports.init = function(app){
-   return function expressInit(req, res, next){
-+    lockdown.install(req);
-     if (app.enabled('x-powered-by')) res.setHeader('X-Powered-By', 'Express');
-     req.res = res;
-     res.req = req;
-diff --git a/lib/middleware/query.js b/lib/middleware/query.js
-index 7e9166947aff3be10f7ffec3771c92581ce211da..aad897b7ecd43477c1768e135ac06211a2424d36 100644
---- a/lib/middleware/query.js
-+++ b/lib/middleware/query.js
-@@ -15,6 +15,7 @@
- var merge = require('utils-merge')
- var parseUrl = require('parseurl');
- var qs = require('qs');
-+var lockdown = require('../lockdown');
- 
- /**
-  * @param {Object} options
-@@ -37,7 +38,9 @@ module.exports = function query(options) {
-   }
- 
-   return function query(req, res, next){
--    if (!req.query) {
-+    lockdown.install(req);
-+
-+    if (!lockdown.getQuery(req)) {
-       var val = parseUrl(req).query;
-       req.query = queryparse(val, opts);
-     }
 diff --git a/lib/response.js b/lib/response.js
-index 2b654f4c6629c821bbeaaeee970b199a420fd8b3..103df49d3d94abf017022cdcf4611e62cad84a74 100644
+index 0d5a4ae..161e34c 100644
 --- a/lib/response.js
 +++ b/lib/response.js
-@@ -29,6 +29,7 @@ var normalizeType = require('./utils').normalizeType;
- var normalizeTypes = require('./utils').normalizeTypes;
- var setCharset = require('./utils').setCharset;
- var cookie = require('cookie');
+@@ -1,3 +1,4 @@
 +var lockdown = require('./lockdown');
- var send = require('send');
- var extname = path.extname;
- var mime = send.mime;
-@@ -312,7 +313,7 @@ res.jsonp = function jsonp(obj) {
+ /*!
+  * express
+  * Copyright(c) 2009-2013 TJ Holowaychuk
+@@ -268,7 +269,7 @@ res.jsonp = function jsonp(obj) {
    var replacer = app.get('json replacer');
    var spaces = app.get('json spaces');
-   var body = stringify(val, replacer, spaces, escape)
+   var body = stringify(obj, replacer, spaces, escape)
 -  var callback = this.req.query[app.get('jsonp callback name')];
 +  var callback = lockdown.getQuery(this.req)[app.get('jsonp callback name')];
  
    // content-type
    if (!this.get('Content-Type')) {
-diff --git a/lib/router/index.js b/lib/router/index.js
-index abb3a6f589e834c5e105f2a96907ed2eb6fc0185..66fef252003098bcc268ef2ebcef0d20b3cce62b 100644
---- a/lib/router/index.js
-+++ b/lib/router/index.js
-@@ -22,6 +22,7 @@ var deprecate = require('depd')('express');
- var flatten = require('array-flatten');
- var parseUrl = require('parseurl');
- var setPrototypeOf = require('setprototypeof')
-+var lockdown = require('../lockdown');
- 
- /**
-  * Module variables.
-@@ -136,6 +137,8 @@ proto.param = function param(name, fn) {
- proto.handle = function handle(req, res, out) {
-   var self = this;
- 
-+  lockdown.install(req);
-+
-   debug('dispatching %s %s', req.method, req.url);
- 
-   var idx = 0;
-@@ -153,9 +156,9 @@ proto.handle = function handle(req, res, out) {
-   var stack = self.stack;
- 
-   // manage inter-router variables
--  var parentParams = req.params;
-+  var parentParams = lockdown.getParams(req);
-   var parentUrl = req.baseUrl || '';
--  var done = restore(out, req, 'baseUrl', 'next', 'params');
-+  var done = restore(out, req, 'baseUrl', 'next', lockdown.paramsProp(req));
- 
-   // setup next layer
-   req.next = next;
-@@ -368,7 +371,7 @@ proto.process_params = function process_params(layer, called, req, res, done) {
-     paramIndex = 0;
-     key = keys[i++];
-     name = key.name;
--    paramVal = req.params[name];
-+    paramVal = lockdown.getParams(req)[name];
-     paramCallbacks = params[name];
-     paramCalled = called[name];
- 
-@@ -380,7 +383,7 @@ proto.process_params = function process_params(layer, called, req, res, done) {
-     if (paramCalled && (paramCalled.match === paramVal
-       || (paramCalled.error && paramCalled.error !== 'route'))) {
-       // restore value
--      req.params[name] = paramCalled.value;
-+      lockdown.getParams(req)[name] = paramCalled.value;
- 
-       // next param
-       return param(paramCalled.error);
-@@ -400,7 +403,7 @@ proto.process_params = function process_params(layer, called, req, res, done) {
-     var fn = paramCallbacks[paramIndex++];
- 
-     // store updated value
--    paramCalled.value = req.params[key.name];
-+    paramCalled.value = lockdown.getParams(req)[key.name];
- 
-     if (err) {
-       // store error

@@ -27,7 +27,7 @@ function ClickableElementEnhancer<E extends React.ElementType>({
   ...rest
 }: ClickableElementEnhancerProps<E>) {
   const isClickedRef = useRef(false)
-  const elRectRef = useRef<DOMRect>()
+  const elRectRef = useRef<DOMRect>(undefined)
   const restProps = rest as PolymorphicComponentProps<E>
 
   const handleMouseDown = (e: React.MouseEvent) => {

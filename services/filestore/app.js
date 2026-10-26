@@ -70,7 +70,7 @@ if (settings.filestore.stores.template_files) {
 }
 
 app.get(
-  '/bucket/:bucket/key/:key(.+)',
+  /^\/bucket\/(?<bucket>[^\/]+)\/key\/(?<key>.+)\/?$/i,
   keyBuilder.bucketFileKeyMiddleware,
   fileController.getFile
 )

@@ -15,7 +15,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { ImperativePanelHandle } from 'react-resizable-panels'
+import { ImperativePanelHandle } from '@/shared/components/resizable-panels'
 
 export type RailTabKey =
   | 'file-tree'
@@ -27,10 +27,7 @@ export type RailTabKey =
   | 'workbench'
 
 export type RailModalKey =
-  | 'keyboard-shortcuts'
-  | 'contact-us'
-  | 'dictionary'
-  | 'labs'
+  'keyboard-shortcuts' | 'contact-us' | 'dictionary' | 'labs'
 
 export function dispatchOpenRailModal(key: RailModalKey) {
   window.dispatchEvent(new CustomEvent('ui:open-rail-modal', { detail: key }))
@@ -41,7 +38,7 @@ const RailContext = createContext<
       selectedTab: RailTabKey
       isOpen: boolean
       setIsOpen: Dispatch<SetStateAction<boolean>>
-      panelRef: React.RefObject<ImperativePanelHandle>
+      panelRef: React.RefObject<ImperativePanelHandle | null>
       togglePane: () => void
       handlePaneExpand: () => void
       handlePaneCollapse: () => void

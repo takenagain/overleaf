@@ -5,7 +5,7 @@ export default function useDeepCompareEffect<T>(
   callback: () => void,
   dependencies: T[]
 ) {
-  const ref = useRef<T[]>()
+  const ref = useRef<T[]>(undefined)
   return useEffect(() => {
     if (_.isEqual(dependencies, ref.current)) {
       return

@@ -7,7 +7,7 @@ const ORPHAN_UI_TIMEOUT_MS = 5000
 
 export default function useDetachedOrphanDetection(): OrphanState {
   const { detachRole, detachIsLinked } = useLayoutContext()
-  const uiTimeoutRef = useRef<number>()
+  const uiTimeoutRef = useRef<number>(undefined)
   const [longTimeOrphan, setLongTimeOrphan] = useState(false)
 
   const orphaned = !detachIsLinked && detachRole === 'detached'

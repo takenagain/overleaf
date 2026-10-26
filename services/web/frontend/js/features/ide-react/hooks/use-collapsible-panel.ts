@@ -1,9 +1,9 @@
 import { RefObject, useLayoutEffect } from 'react'
-import { ImperativePanelHandle } from 'react-resizable-panels'
+import { ImperativePanelHandle } from '@/shared/components/resizable-panels'
 
 export default function useCollapsiblePanel(
   panelIsOpen: boolean,
-  panelRef: RefObject<ImperativePanelHandle>
+  panelRef: RefObject<ImperativePanelHandle | null>
 ) {
   // useLayoutEffect keeps the panel-size update in the same paint cycle as the
   // CSS class changes that show/hide the panel content, eliminating a visible

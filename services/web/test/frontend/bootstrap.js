@@ -1,5 +1,5 @@
 // Run babel on tests to allow support for import/export statements in Node
-require('@babel/register')({
+require('@babel/register').default({
   extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs'],
   plugins: [
     [
@@ -39,8 +39,8 @@ process.env.OVERLEAF_CONFIG = path.resolve(
 // Load sinon-chai assertions so expect(stubFn).to.have.been.calledWith('abc')
 // has a nicer failure messages
 const chai = require('chai')
-chai.use(require('sinon-chai'))
-chai.use(require('chai-as-promised'))
+chai.use(require('sinon-chai').default)
+chai.use(require('chai-as-promised').default)
 
 // Populate meta for top-level access in modules on import
 const { resetMeta } = require('./helpers/reset-meta')
@@ -118,7 +118,7 @@ globalThis.WebSocket = class WebSocket {
 }
 
 // node-fetch doesn't accept relative URL's: https://github.com/node-fetch/node-fetch/blob/master/docs/v2-LIMITS.md#known-differences
-const fetch = require('node-fetch')
+const { default: fetch, Response } = require('node-fetch')
 globalThis.fetch =
   global.fetch =
   window.fetch =
@@ -131,6 +131,7 @@ addHook(() => '', {
   ignoreNodeModules: false,
 })
 
+globalThis.Window = global.Window = window.Window
 globalThis.HTMLElement.prototype.scrollIntoView = () => {}
 
 globalThis.DOMParser = window.DOMParser
@@ -142,7 +143,7 @@ const fetchMock = require('fetch-mock').default
 
 fetchMock.spyGlobal()
 fetchMock.config.fetch = global.fetch
-fetchMock.config.Response = fetch.Response
+fetchMock.config.Response = Response
 
 Object.defineProperty(navigator, 'onLine', {
   configurable: true,

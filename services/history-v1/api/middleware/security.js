@@ -2,7 +2,7 @@
 
 const basicAuth = require('basic-auth')
 const config = require('config')
-const HTTPStatus = require('http-status')
+const HTTPStatus = require('http-status').default
 const jwt = require('jsonwebtoken')
 const tsscmp = require('tsscmp')
 const { parseReq, z } = require('@overleaf/validation-tools')

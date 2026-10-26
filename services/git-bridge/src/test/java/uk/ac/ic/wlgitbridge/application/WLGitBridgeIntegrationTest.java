@@ -767,14 +767,25 @@ public class WLGitBridgeIntegrationTest {
     return "http://127.0.0.1:" + port + "/" + PROJECT_ID;
   }
 
-  private static String expectedPushOutOfDate(int port) {
-    return "error: failed to push some refs to '"
-        + gitRemoteUrl(port)
-        + "'\n"
-        + "hint: Updates were rejected because the tip of your current branch is behind\n"
-        + "hint: its remote counterpart. If you want to integrate the remote changes,\n"
-        + "hint: use 'git pull' before pushing again.\n"
-        + "hint: See the 'Note about fast-forwards' in 'git push --help' for details.\n";
+  private static List<String> pushErrorLines(Process push, int port) throws IOException {
+    // Git versions differ in whether they show a URL redirect and empty sideband separators.
+    // Keep the complete server errors, hints and branch rejection instead of skipping headers.
+    return Util.linesFromStream(push.getErrorStream(), 0, "[K").stream()
+        .filter(line -> !line.equals("warning: redirecting to " + gitRemoteUrl(port) + "/"))
+        .filter(line -> !line.equals("remote:"))
+        .map(line -> line.replaceFirst("^(! \\[(?:remote )?rejected\\])\\s+", "$1 "))
+        .toList();
+  }
+
+  private static List<String> expectedPushOutOfDate(int port) {
+    return Arrays.asList(
+        "To " + gitRemoteUrl(port),
+        "! [rejected] main -> main (non-fast-forward)",
+        "error: failed to push some refs to '" + gitRemoteUrl(port) + "'",
+        "hint: Updates were rejected because the tip of your current branch is behind",
+        "hint: its remote counterpart. If you want to integrate the remote changes,",
+        "hint: use 'git pull' before pushing again.",
+        "hint: See the 'Note about fast-forwards' in 'git push --help' for details.");
   }
 
   @Test
@@ -794,7 +805,7 @@ public class WLGitBridgeIntegrationTest {
     gitAdd(testprojDir);
     gitCommit(testprojDir, "push");
     Process push = gitPush(testprojDir, 1);
-    assertEquals(expectedPushOutOfDate(wlgb.getPort()), Util.fromStream(push.getErrorStream(), 2));
+    assertEquals(expectedPushOutOfDate(wlgb.getPort()), pushErrorLines(push, wlgb.getPort()));
   }
 
   @Test
@@ -814,11 +825,12 @@ public class WLGitBridgeIntegrationTest {
     gitAdd(testprojDir);
     gitCommit(testprojDir, "push");
     Process push = gitPush(testprojDir, 1);
-    assertEquals(expectedPushOutOfDate(wlgb.getPort()), Util.fromStream(push.getErrorStream(), 2));
+    assertEquals(expectedPushOutOfDate(wlgb.getPort()), pushErrorLines(push, wlgb.getPort()));
   }
 
   private static List<String> expectedPushInvalidFiles(int port) {
     return Arrays.asList(
+        "remote: error: invalid files",
         "remote: hint: You have 4 invalid files in your Overleaf project:",
         "remote: hint: file1.invalid (error)",
         "remote: hint: file2.exe (invalid file extension)",
@@ -844,12 +856,13 @@ public class WLGitBridgeIntegrationTest {
     gitAdd(testprojDir);
     gitCommit(testprojDir, "push");
     Process push = gitPush(testprojDir, 1);
-    List<String> actual = Util.linesFromStream(push.getErrorStream(), 2, "[K");
+    List<String> actual = pushErrorLines(push, wlgb.getPort());
     assertEquals(expectedPushInvalidFiles(wlgb.getPort()), actual);
   }
 
   private static List<String> expectedPushInvalidProject(int port) {
     return Arrays.asList(
+        "remote: error: invalid project",
         "remote: hint: project: no main file",
         "remote: hint: The project would have no (editable) main .tex file.",
         "To " + gitRemoteUrl(port),
@@ -873,12 +886,13 @@ public class WLGitBridgeIntegrationTest {
     gitAdd(testprojDir);
     gitCommit(testprojDir, "push");
     Process push = gitPush(testprojDir, 1);
-    List<String> actual = Util.linesFromStream(push.getErrorStream(), 2, "[K");
+    List<String> actual = pushErrorLines(push, wlgb.getPort());
     assertEquals(expectedPushInvalidProject(wlgb.getPort()), actual);
   }
 
   private static List<String> expectedPushUnexpectedError(int port) {
     return Arrays.asList(
+        "remote: error: Overleaf error",
         "remote: hint: There was an internal error with the Overleaf server.",
         "remote: hint: Please contact Overleaf.",
         "To " + gitRemoteUrl(port),
@@ -903,14 +917,13 @@ public class WLGitBridgeIntegrationTest {
     gitAdd(testprojDir);
     gitCommit(testprojDir, "push");
     Process push = gitPush(testprojDir, 1);
-    List<String> actual = Util.linesFromStream(push.getErrorStream(), 2, "[K");
+    List<String> actual = pushErrorLines(push, wlgb.getPort());
     assertEquals(expectedPushUnexpectedError(wlgb.getPort()), actual);
   }
 
   private static List<String> expectedPushInvalidExeFile(int port) {
     return Arrays.asList(
         "remote: error: invalid files",
-        "remote:",
         "remote: hint: You have 1 invalid files in your Overleaf project:",
         "remote: hint: file1.exe (invalid file extension)",
         "To " + gitRemoteUrl(port),
@@ -939,7 +952,7 @@ public class WLGitBridgeIntegrationTest {
     gitAdd(testprojDir);
     gitCommit(testprojDir, "push");
     Process push = gitPush(testprojDir, 1);
-    List<String> actual = Util.linesFromStream(push.getErrorStream(), 0, "[K");
+    List<String> actual = pushErrorLines(push, wlgb.getPort());
     assertEquals(expectedPushInvalidExeFile(wlgb.getPort()), actual);
 
     // remove invalid file and push again; it should succeed this time
@@ -1078,6 +1091,7 @@ public class WLGitBridgeIntegrationTest {
 
   private static List<String> expectedPushSubmodule(int port) {
     return Arrays.asList(
+        "remote: error: invalid git repo",
         "remote: hint: Your Git repository contains a reference we cannot resolve.",
         "remote: hint: If your project contains a Git submodule,",
         "remote: hint: please remove it and try again.",
@@ -1105,7 +1119,7 @@ public class WLGitBridgeIntegrationTest {
     gitAdd(testprojDir);
     gitCommit(testprojDir, "push");
     Process push = gitPush(testprojDir, 1);
-    List<String> actual = Util.linesFromStream(push.getErrorStream(), 2, "[K");
+    List<String> actual = pushErrorLines(push, wlgb.getPort());
     assertEquals(expectedPushSubmodule(wlgb.getPort()), actual);
   }
 

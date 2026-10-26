@@ -2,6 +2,7 @@ import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import getMeta from '@/utils/meta'
 import { resources } from '@/i18n-resources/writefull'
+import { legacyPluralResources } from '@/utils/legacy-plural-resources'
 
 const LANG = getMeta('ol-i18n').currentLangCode
 
@@ -12,9 +13,6 @@ const LANG = getMeta('ol-i18n').currentLangCode
 
 i18n.use(initReactI18next).init({
   lng: LANG,
-
-  // still using the v3 plural suffixes
-  compatibilityJSON: 'v3',
 
   react: {
     // Since we are manually waiting on the translations data to
@@ -57,7 +55,11 @@ i18n.use(initReactI18next).init({
 const localesPromise = import(
   /* webpackChunkName: "[request]" */ `../../locales/${LANG}.json`
 ).then(lang => {
-  i18n.addResourceBundle(LANG, 'translation', lang)
+  i18n.addResourceBundle(
+    LANG,
+    'translation',
+    legacyPluralResources(lang.default ?? lang, LANG)
+  )
   i18n.addResourceBundle(
     LANG,
     'writefull',

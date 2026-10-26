@@ -13,14 +13,14 @@ https://github.com/ajaxorg/ace/blob/master/tool/tmtheme.js
 */
 
 const fs = require('fs')
-const globby = require('globby')
+const { globbySync } = require('globby')
 const mensch = require('mensch')
 const path = require('path')
 const overrides = require('./overrides.json')
 const { merge } = require('lodash')
 
 // CSS files from https://github.com/overleaf/ace/tree/overleaf/lib/ace/theme copied into the "ace" folder
-const themePaths = globby.sync(['ace/*.css'], { cwd: path.dirname(__dirname) })
+const themePaths = globbySync(['ace/*.css'], { cwd: path.dirname(__dirname) })
 
 const outputDir = path.join(path.dirname(__dirname), 'cm6')
 

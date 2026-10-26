@@ -1,0 +1,15 @@
+diff --git a/src/body.js b/src/body.js
+index 714e27e..0fda1cf 100644
+--- a/src/body.js
++++ b/src/body.js
+@@ -273,8 +273,8 @@ export const clone = (instance, highWaterMark) => {
+ 		// Tee instance body
+ 		p1 = new PassThrough({highWaterMark});
+ 		p2 = new PassThrough({highWaterMark});
+-		body.pipe(p1);
+-		body.pipe(p2);
++		Stream.pipeline(body, p1, () => {});
++		Stream.pipeline(body, p2, () => {});
+ 		// Set instance body to teed body and return the other teed body
+ 		instance[INTERNALS].stream = p1;
+ 		body = p2;

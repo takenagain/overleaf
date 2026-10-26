@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react'
-import { ImperativePanelHandle } from 'react-resizable-panels'
+import { ImperativePanelHandle } from '@/shared/components/resizable-panels'
 import useCollapsiblePanel from '@/features/ide-react/hooks/use-collapsible-panel'
 import { useLayoutContext } from '@/shared/context/layout-context'
 

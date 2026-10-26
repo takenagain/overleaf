@@ -1,0 +1,10 @@
+diff --git a/dist/index.js b/dist/index.js
+index b97617d5156ccf91210a1ffded228bd8679d0800..5cd7009f5f840cef85003496888a47a5f57d2e25 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -94,4 +94,3 @@ function sandboxMock(object) {
+   return this.add(mockResult);
+ }
+ 
+-sinon.sandbox.mock = sandboxMock;
+\ No newline at end of file

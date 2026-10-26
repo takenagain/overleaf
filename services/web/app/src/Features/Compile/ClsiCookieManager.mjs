@@ -7,7 +7,7 @@ import {
   RequestFailedError,
 } from '@overleaf/fetch-utils'
 import RedisWrapper from '../../infrastructure/RedisWrapper.mjs'
-import Cookie from 'cookie'
+import { parseSetCookie } from 'cookie'
 import logger from '@overleaf/logger'
 import Metrics from '@overleaf/metrics'
 
@@ -126,8 +126,8 @@ const ClsiCookieManagerFactory = function (backendGroup) {
   }
 
   function _parseServerIdFromResponse(response) {
-    const cookies = Cookie.parse(response.headers['set-cookie']?.[0] || '')
-    return cookies?.[Settings.clsiCookie.key]
+    const cookie = parseSetCookie(response.headers['set-cookie']?.[0] || '')
+    return cookie.name === Settings.clsiCookie.key ? cookie.value : undefined
   }
 
   async function checkIsLoadSheddingEvent(

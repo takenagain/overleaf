@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
-import Uppy, { ErrorResponse } from '@uppy/core'
+import Uppy, { type Meta, type UppyFile } from '@uppy/core'
 import XHRUpload from '@uppy/xhr-upload'
 import getMeta from '@/utils/meta'
+
+type ErrorResponse = NonNullable<UppyFile<Meta, ImportResponse>['response']>
 
 type UploaderConfig = {
   endpoint: string
@@ -14,6 +16,7 @@ type UploaderConfig = {
 
 type ImportResponse = {
   project_id?: string
+  error?: string
 }
 
 export function useProjectUploader({
@@ -28,7 +31,7 @@ export function useProjectUploader({
   const [ableToUpload, setAbleToUpload] = useState(false)
 
   const [uppy] = useState(() => {
-    return new Uppy({
+    return new Uppy<Meta, ImportResponse>({
       allowMultipleUploadBatches: false,
       restrictions: {
         maxNumberOfFiles: 1,
@@ -59,7 +62,7 @@ export function useProjectUploader({
         onError?.(response)
       })
       .on('upload-success', (_file, response) => {
-        const { project_id: projectId }: ImportResponse = response.body
+        const projectId = response.body?.project_id
 
         if (projectId) {
           onSuccess(projectId)

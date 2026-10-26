@@ -1,11 +1,9 @@
-import session from 'express-session'
-import RedisStoreFactory from 'connect-redis'
+import { RedisStore } from 'connect-redis'
+import { createSessionStoreClient } from '@overleaf/redis-wrapper'
 import logger from '@overleaf/logger'
 import Settings from '@overleaf/settings'
 import SessionManager from '../Features/Authentication/SessionManager.mjs'
 import Metrics from '@overleaf/metrics'
-
-const RedisStore = RedisStoreFactory(session)
 
 const MAX_SESSION_SIZE_THRESHOLD = 4096
 
@@ -20,6 +18,7 @@ class CustomSessionStore extends RedisStore {
   #updateInPlaceStore
 
   constructor({ client }) {
+    client = createSessionStoreClient(client)
     super({ client })
     this.#initialSetStore = new RedisStore({
       client: new CustomSetRedisClient(client, 'NX'),
@@ -151,15 +150,28 @@ class CustomSetRedisClient {
     this.#flag = flag
   }
 
-  set(args, cb) {
-    args.push(this.#flag)
-    this.#client.set(args, (err, ok) => {
+  async set(key, value, options) {
+    let ok
+    let error
+    try {
+      ok = await this.#client.set(key, value, {
+        ...options,
+        condition: this.#flag,
+      })
+      return ok
+    } catch (err) {
+      error = err
+      throw err
+    } finally {
       Metrics.inc('session.store.set', 1, {
         path: this.#flag,
-        status: err ? 'error' : ok ? 'success' : 'failure',
+        status: error ? 'error' : ok ? 'success' : 'failure',
       })
-      cb(err, ok)
-    })
+    }
+  }
+
+  del(keys) {
+    return this.#client.del(keys)
   }
 }
 

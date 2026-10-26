@@ -1,4 +1,4 @@
-import archiver from 'archiver'
+import { ZipArchive } from 'archiver'
 import async from 'async'
 import logger from '@overleaf/logger'
 import ProjectEntityHandler from '../Project/ProjectEntityHandler.mjs'
@@ -7,10 +7,10 @@ import HistoryManager from '../History/HistoryManager.mjs'
 import Metrics from '@overleaf/metrics'
 let ProjectZipStreamManager
 
-export default ProjectZipStreamManager = {
+export default (ProjectZipStreamManager = {
   createZipStreamForMultipleProjects(projectIds, zipFromHistory, callback) {
     // We'll build up a zip file that contains multiple zip files
-    const archive = archiver('zip')
+    const archive = new ZipArchive()
     archive.on('error', err =>
       logger.err(
         { err, projectIds },
@@ -79,7 +79,7 @@ export default ProjectZipStreamManager = {
         HistoryManager.getLatestZipWithHistoryId(historyId, callback)
       })
     }
-    const archive = archiver('zip')
+    const archive = new ZipArchive()
     // return stream immediately before we start adding things to it
     archive.on('error', err =>
       logger.err(
@@ -166,4 +166,4 @@ export default ProjectZipStreamManager = {
       async.parallelLimit(jobs, 5, callback)
     })
   },
-}
+})

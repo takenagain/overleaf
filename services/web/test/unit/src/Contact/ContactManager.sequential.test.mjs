@@ -36,7 +36,10 @@ describe('ContactManager', function () {
 
   describe('getContactIds', function () {
     beforeEach(async function (ctx) {
-      ctx.clock = sinon.useFakeTimers(new Date('2026-01-01'))
+      ctx.clock = sinon.useFakeTimers({
+        now: new Date('2026-01-01'),
+        toNotFake: ['nextTick', 'queueMicrotask'],
+      })
 
       // otherId3: touched once at T → count 1, ts = T
       await ContactManager.promises.addContact(userId, otherId3)

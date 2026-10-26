@@ -1,7 +1,7 @@
 const config = require('config')
 const sinon = require('sinon')
 const { expect } = require('chai')
-const nodeFetch = require('node-fetch')
+const nodeFetch = require('node-fetch').default
 
 const cleanup = require('../storage/support/cleanup')
 const expectResponse = require('./support/expect_response')

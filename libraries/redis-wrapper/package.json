@@ -18,7 +18,7 @@
     "test": "yarn run lint && yarn run types:check && yarn run test:unit",
     "test:ci": "yarn run test:unit",
     "test:unit": "mocha --exit test/**/*.{js,cjs}",
-    "types:check": "tsc --noEmit"
+    "types:check": "node ../../tools/type-check.mjs --noEmit"
   },
   "peerDependencies": {
     "@overleaf/logger": "workspace:*",
@@ -26,20 +26,20 @@
     "@overleaf/o-error": "workspace:*"
   },
   "dependencies": {
-    "async": "^3.2.5",
-    "ioredis": "~4.27.1"
+    "async": "^3.2.6",
+    "ioredis": "^6.0.0"
   },
   "devDependencies": {
     "@overleaf/logger": "workspace:*",
     "@overleaf/o-error": "workspace:*",
-    "@types/node": "^24.5.2",
-    "chai": "^4.3.6",
-    "eslint": "^10.4.0",
-    "mocha": "^11.1.0",
-    "mocha-junit-reporter": "^2.2.1",
-    "mocha-multi-reporters": "^1.5.1",
+    "@types/node": "^26.6.5",
+    "chai": "^6.3.0",
+    "eslint": "^10.13.0",
+    "mocha": "^12.0.3",
+    "mocha-junit-reporter": "patch:mocha-junit-reporter@npm%3A2.2.1#~/.yarn/patches/mocha-junit-reporter-npm-2.2.1-e02a1e67a3.patch",
+    "mocha-multi-reporters": "^1.5.2",
     "sandboxed-module": "^2.0.4",
-    "sinon": "^9.2.4",
-    "typescript": "^5.0.4"
+    "sinon": "^22.1.0",
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
   }
 }

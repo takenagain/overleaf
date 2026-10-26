@@ -14,7 +14,7 @@ interface Rule {
   improvedTitle?: (
     currentTitle: string,
     details?: string[]
-  ) => string | [string, JSX.Element]
+  ) => string | [string, React.JSX.Element]
   package?: string
   highlightCommand?: (contentDetails: string[]) => string | undefined
 }

@@ -1,8 +1,8 @@
 const BPromise = require('bluebird')
 const { expect } = require('chai')
 const fs = BPromise.promisifyAll(require('node:fs'))
-const HTTPStatus = require('http-status')
-const fetch = require('node-fetch')
+const HTTPStatus = require('http-status').default
+const fetch = require('node-fetch').default
 
 const cleanup = require('../storage/support/cleanup')
 const fixtures = require('../storage/support/fixtures')

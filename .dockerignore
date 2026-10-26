@@ -1,0 +1,25 @@
+.git
+**/.DS_Store
+**/node_modules
+**/.cache
+**/coverage
+**/target
+**/.env
+**/.env.*
+**/*.env
+**/*.env.*
+.yarn/cache
+.yarn/unplugged
+.yarn/install-state.gz
+.yarn/build-state.yml
+.yarn/sdks
+.pnp.cjs
+.pnp.loader.mjs
+services/git-bridge
+server-ce/server-ce
+server-ce/test
+
+# Match the native Community Edition build context.
+services/web/scripts/plan-prices
+services/web/scripts/translations
+services/web/scripts/ukamf

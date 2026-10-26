@@ -100,6 +100,11 @@ describe('UserEmailContext', function () {
       const value = renderUserEmailsContext()
       result = value.result
       await fetchMock.callHistory.flush(true)
+      await waitFor(() =>
+        expect(result.current.state.data.byId).to.have.property(
+          'bar@overleaf.com'
+        )
+      )
     })
 
     describe('getEmails()', function () {

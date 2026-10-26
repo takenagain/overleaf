@@ -10,7 +10,7 @@ import {
 
 const TabularContext = createContext<
   | {
-      ref: RefObject<HTMLDivElement>
+      ref: RefObject<HTMLDivElement | null>
       showHelp: () => void
       hideHelp: () => void
       helpShown: boolean

@@ -1,7 +1,7 @@
 'use strict'
 
 const { expect } = require('chai')
-const HTTPStatus = require('http-status')
+const HTTPStatus = require('http-status').default
 
 function expectStatus(err, expected) {
   const httpStatus = err.status || err.statusCode

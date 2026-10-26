@@ -32,7 +32,6 @@ export const loadPdfDocumentFromUrl = (
     disableFontFace,
     disableAutoFetch: true, // only fetch the data needed for the displayed pages
     disableStream,
-    isEvalSupported: false,
     enableXfa: false, // default is false (2021-10-12), but set explicitly to be sure
     ...options,
   })

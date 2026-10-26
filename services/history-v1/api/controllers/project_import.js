@@ -5,7 +5,7 @@
 const config = require('config')
 const { expressify } = require('@overleaf/promise-utils')
 
-const HTTPStatus = require('http-status')
+const HTTPStatus = require('http-status').default
 
 const core = require('overleaf-editor-core')
 const Change = core.Change

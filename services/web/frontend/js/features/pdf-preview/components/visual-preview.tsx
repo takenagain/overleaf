@@ -53,7 +53,7 @@ export const VisualPreview: FC<{ view: EditorView }> = ({ view }) => {
   const phrases = usePhrases()
 
   const isMountedRef = useIsMounted()
-  const viewRef = useRef<EditorView | undefined>()
+  const viewRef = useRef<EditorView | undefined>(undefined)
   const containerRef = useRef<HTMLDivElement>(null)
   const previewByPathRef = useRef(previewByPath)
   const metadataRef = useRef<Metadata>({

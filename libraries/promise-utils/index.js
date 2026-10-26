@@ -1,5 +1,5 @@
 const { promisify, callbackify } = require('node:util')
-const pLimit = require('p-limit')
+const pLimit = require('p-limit').default
 
 module.exports = {
   promisify,

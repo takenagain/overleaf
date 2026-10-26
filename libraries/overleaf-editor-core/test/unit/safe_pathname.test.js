@@ -20,7 +20,7 @@ describe('safePathname', function () {
     expectClean('DSC4056.JPG', 'DSC4056.JPG')
 
     // detects unclean pathnames
-    expect(safePathname.isClean('rm -rf /')).to.be.falsy
+    expect(safePathname.isClean('rm -rf /')).to.not.be.ok
 
     // replace invalid characters with underscores
     expectClean(

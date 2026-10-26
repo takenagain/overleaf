@@ -1,5 +1,5 @@
 const version = {
-  mathjax: '4.1.2',
+  mathjax: '4.1.3',
   dictionaries: '0.0.3',
 }
 

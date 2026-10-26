@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import cheerio from 'cheerio'
+import * as cheerio from 'cheerio'
 import UserHelper from '../../../../../test/acceptance/src/helpers/UserHelper.mjs'
 import { expectValidationErrorRaw } from '@overleaf/validation-tools/testUtils.js'
 

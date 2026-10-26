@@ -7,7 +7,7 @@ import Metrics from '@overleaf/metrics'
 import logger from '@overleaf/logger'
 import querystring from 'node:querystring'
 import Settings from '@overleaf/settings'
-import basicAuth from 'basic-auth'
+import { parse as parseBasicAuth } from 'basic-auth'
 import tsscmp from 'tsscmp'
 import UserHandler from '../User/UserHandler.mjs'
 import UserSessionsManager from '../User/UserSessionsManager.mjs'
@@ -514,7 +514,7 @@ const AuthenticationController = {
   requireBasicAuth: function (userDetails) {
     const userDetailsMap = new Map(Object.entries(userDetails))
     return function (req, res, next) {
-      const credentials = basicAuth(req)
+      const credentials = parseBasicAuth(req.headers.authorization ?? '')
       if (
         !credentials ||
         !checkCredentials(userDetailsMap, credentials.name, credentials.pass)

@@ -54,7 +54,7 @@ describe('OutputFileArchiveManager', () => {
     }))
 
     vi.doMock('archiver', () => ({
-      default: ctx.archiver,
+      ZipArchive: ctx.archiver,
     }))
 
     vi.doMock('node:fs/promises', () => ctx.fs)
@@ -88,7 +88,7 @@ describe('OutputFileArchiveManager', () => {
     })
 
     it('creates a zip archive', ctx => {
-      sinon.assert.calledWith(ctx.archiver, 'zip')
+      sinon.assert.calledWithNew(ctx.archiver)
     })
 
     it('listens to errors from the archive', ctx => {

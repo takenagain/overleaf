@@ -1,7 +1,7 @@
 import { useOutlineContext } from '@/features/ide-react/context/outline-context'
 import useCollapsiblePanel from '@/features/ide-react/hooks/use-collapsible-panel'
 import { useRef } from 'react'
-import { ImperativePanelHandle } from 'react-resizable-panels'
+import { ImperativePanelHandle } from '@/shared/components/resizable-panels'
 
 export const useOutlinePane = () => {
   const { canShowOutline, outlineExpanded, expandOutline, collapseOutline } =

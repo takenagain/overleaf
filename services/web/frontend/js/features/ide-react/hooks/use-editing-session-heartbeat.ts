@@ -55,7 +55,7 @@ export function useEditingSessionHeartbeat() {
 
   const heartBeatSentRecentlyRef = useRef(false)
 
-  const heartBeatResetTimerRef = useRef<number>()
+  const heartBeatResetTimerRef = useRef<number>(undefined)
 
   useEffect(() => {
     return () => {

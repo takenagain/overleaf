@@ -15,25 +15,25 @@
     "lint:fix": "eslint --cache --cache-location ../../.cache/eslint/ --fix --ext .cjs,.js,.jsx,.mjs,.ts .",
     "test:ci": "yarn run test:unit",
     "test:unit": "vitest --config vitest.config.ts",
-    "types:check": "tsc --noEmit"
+    "types:check": "node ../../tools/type-check.mjs --noEmit"
   },
   "author": "Overleaf (https://www.overleaf.com)",
   "license": "AGPL-3.0-only",
   "devDependencies": {
-    "@types/lodash": "^4.17.24",
-    "@types/node": "^24.5.2",
+    "@types/lodash": "^4.17.27",
+    "@types/node": "^26.6.5",
     "@types/node-fetch": "^2.6.13",
-    "chai": "^4.3.6",
-    "chai-as-promised": "^7.1.1",
-    "eslint": "^10.4.0",
-    "express": "4.22.1",
+    "chai": "^6.3.0",
+    "chai-as-promised": "^8.0.2",
+    "eslint": "^10.13.0",
+    "express": "5.3.0",
     "selfsigned": "^5.5.0",
-    "typescript": "^5.0.4",
-    "vitest": "4.1.5"
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "vitest": "5.0.5"
   },
   "dependencies": {
     "@overleaf/o-error": "workspace:*",
     "lodash": "^4.18.1",
-    "node-fetch": "^2.7.0"
+    "node-fetch": "^3.3.2"
   }
 }

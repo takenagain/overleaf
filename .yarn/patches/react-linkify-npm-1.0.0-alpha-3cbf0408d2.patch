@@ -1,0 +1,13 @@
+diff --git a/dist/decorators/defaultMatchDecorator.js b/dist/decorators/defaultMatchDecorator.js
+index de684dadfbea809b95ada12c6f8b9335ed1da46e..e107381f8edc03fb5fd05fee1e885411b82da8c8 100644
+--- a/dist/decorators/defaultMatchDecorator.js
++++ b/dist/decorators/defaultMatchDecorator.js
+@@ -14,7 +14,7 @@ var _tlds2 = _interopRequireDefault(_tlds);
+ 
+ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+ 
+-var linkify = new _linkifyIt2.default();
++var linkify = new _linkifyIt.LinkifyIt();
+ linkify.tlds(_tlds2.default);
+ 
+ exports.default = function (text) {

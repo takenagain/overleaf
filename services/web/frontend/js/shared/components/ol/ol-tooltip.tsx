@@ -40,7 +40,7 @@ export type OLTooltipProps = {
   overlayProps?: OverlayProps
   tooltipProps?: BSTooltipProps
   hidden?: boolean
-  children: React.ReactElement
+  children: React.ReactElement<{ onClick?: React.MouseEventHandler }>
 }
 
 function OLTooltip({

@@ -6,7 +6,7 @@ export type BadgeLinkProps = MergeAndOverride<
   BadgeProps,
   {
     href: string
-    badgeContentRef?: React.RefObject<HTMLElement>
+    badgeContentRef?: React.RefObject<HTMLElement | null>
     badgeLinkClasses?: string
   }
 >

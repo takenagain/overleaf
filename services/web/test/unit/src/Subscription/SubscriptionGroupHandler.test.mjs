@@ -4,6 +4,10 @@ import sinon from 'sinon'
 import MockRequest from '../helpers/MockRequest.mjs'
 import { InvalidEmailError } from '../../../../app/src/Features/Errors/Errors.js'
 
+vi.mock('../../../../app/src/Features/Errors/Errors.js', () =>
+  vi.importActual('../../../../app/src/Features/Errors/Errors.js')
+)
+
 const { ObjectId } = mongodb
 
 const modulePath =
@@ -72,7 +76,7 @@ describe('SubscriptionGroupHandler', function () {
         .returns(ctx.termsAndConditionsUpdate),
       currency: 'USD',
       hasAddOn(code) {
-        return this.addOns.some(addOn => addOn.code === code)
+        return this.addOns.some((addOn) => addOn.code === code)
       },
       get isCollectionMethodManual() {
         return false
@@ -213,9 +217,6 @@ describe('SubscriptionGroupHandler', function () {
       .withArgs('previewGroupPlanUpgrade')
       .resolves([{ subscriptionChange: ctx.previewSubscriptionChange }])
 
-    vi.mock('../../../../app/src/Features/Errors/Errors.js', () =>
-      vi.importActual('../../../../app/src/Features/Errors/Errors.js')
-    )
     vi.doMock(
       '../../../../app/src/Features/Subscription/SubscriptionUpdater.mjs',
       () => ({

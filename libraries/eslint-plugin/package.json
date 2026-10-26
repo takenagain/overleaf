@@ -8,12 +8,12 @@
     "lodash": "^4.18.1"
   },
   "devDependencies": {
-    "@eslint/json": "^2.0.0",
-    "@types/node": "^24.5.2",
-    "@typescript-eslint/parser": "^8.59.4",
-    "eslint": "^10.4.0",
-    "typescript": "^5.0.4",
-    "vitest": "4.1.5"
+    "@eslint/json": "^2.1.1",
+    "@types/node": "^26.6.5",
+    "@typescript-eslint/parser": "^8.72.0",
+    "eslint": "^10.13.0",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "vitest": "5.0.5"
   },
   "scripts": {
     "test": "yarn run lint && yarn run types:check && yarn run test:unit",
@@ -21,6 +21,6 @@
     "lint:fix": "eslint --cache --cache-location ../../.cache/eslint/ --fix --ext .cjs,.js,.jsx,.mjs,.ts .",
     "test:ci": "yarn run test:unit",
     "test:unit": "vitest --config vitest.config.ts",
-    "types:check": "tsc --noEmit"
+    "types:check": "node ../../tools/type-check.mjs --noEmit"
   }
 }

@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  useRef,
+  useCallback,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 import { matchSorter } from 'match-sorter'
 import { useCombobox, UseMultipleSelectionReturnValue } from 'downshift'
@@ -98,15 +105,16 @@ export default function SelectCollaborators({
 
   const inputRef = useRef<HTMLInputElement>(null)
 
+  const [focusRequest, setFocusRequest] = useState(0)
   const focusInput = useCallback(() => {
-    if (inputRef.current) {
-      window.setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus()
-        }
-      }, 10)
-    }
-  }, [inputRef])
+    setFocusRequest(request => request + 1)
+  }, [])
+
+  // Restore focus after tag updates commit, before another user interaction can
+  // move focus to the permissions menu or the Invite button.
+  useLayoutEffect(() => {
+    if (focusRequest > 0) inputRef.current?.focus()
+  }, [focusRequest])
 
   const isValidInput = useMemo(() => {
     if (inputValue.includes('@')) {

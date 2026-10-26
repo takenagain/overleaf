@@ -44,7 +44,7 @@ app.get('/status', (req, res) => res.send('notifications is up'))
 
 app.get('/health_check', HealthCheckController.check)
 
-app.get('*', (req, res) => res.sendStatus(404))
+app.get(/.*/, (req, res) => res.sendStatus(404))
 
 app.use(handleValidationError)
 

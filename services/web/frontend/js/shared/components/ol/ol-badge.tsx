@@ -5,7 +5,7 @@ export type OLBadgeProps = MergeAndOverride<
   BSBadgeProps,
   {
     prepend?: React.ReactNode
-    badgeContentRef?: React.RefObject<HTMLElement>
+    badgeContentRef?: React.RefObject<HTMLElement | null>
   }
 >
 

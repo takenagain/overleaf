@@ -1,0 +1,48 @@
+diff --git a/lib/signed-xml.js b/lib/signed-xml.js
+--- a/lib/signed-xml.js
++++ b/lib/signed-xml.js
+@@ -381,7 +381,7 @@
+     }
+   }
+ 
+-  var doc = new Dom().parseFromString(xml)
++  var doc = new Dom().parseFromString(xml, "application/xml")
+ 
+   // Reset the references as only references from our re-parsed signedInfo node can be trusted
+   this.references = [];
+@@ -630,7 +630,7 @@
+ 
+ SignedXml.prototype.loadSignature = function(signatureNode) {
+   if (typeof signatureNode === 'string') {
+-    this.signatureNode = signatureNode = new Dom().parseFromString(signatureNode);
++    this.signatureNode = signatureNode = new Dom().parseFromString(signatureNode, "application/xml");
+   } else {
+     this.signatureNode = signatureNode;
+   }
+@@ -806,7 +806,7 @@
+     throw new Error("Last paramater must be a callback function")
+   }
+ 
+-  var doc = new Dom().parseFromString(xml),
++  var doc = new Dom().parseFromString(xml, "application/xml"),
+       xmlNsAttr = "xmlns",
+       signatureAttrs = [],
+       location,
+@@ -877,7 +877,7 @@
+   // A trick to remove the namespaces that already exist in the xml
+   // This only works if the prefix and namespace match with those in te xml
+   var dummySignatureWrapper = "<Dummy " + existingPrefixesString + ">" + signatureXml + "</Dummy>"
+-  var xml = new Dom().parseFromString(dummySignatureWrapper)
++  var xml = new Dom().parseFromString(dummySignatureWrapper, "application/xml")
+   var signatureDoc = xml.documentElement.firstChild;
+ 
+   var referenceNode = xpath.select(location.reference, doc);
+@@ -1116,7 +1116,7 @@
+                               signatureValueXml +
+                               "</" + prefix + "Signature>"
+ 
+-  var doc = new Dom().parseFromString(dummySignatureWrapper)
++  var doc = new Dom().parseFromString(dummySignatureWrapper, "application/xml")
+   return doc.documentElement.firstChild;
+ }
+ 

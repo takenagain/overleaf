@@ -2,7 +2,7 @@
 # Overleaf Base Image (sharelatex/sharelatex-base)
 # --------------------------------------------------
 
-FROM phusion/baseimage:noble-1.0.3
+FROM phusion/baseimage:resolute-1.0.22
 
 # Makes sure LuaTex cache is writable
 # -----------------------------------
@@ -10,7 +10,7 @@ ENV TEXMFVAR=/var/lib/overleaf/tmp/texmf-var
 
 # Update to ensure dependencies are updated
 # ------------------------------------------
-ENV REBUILT_AFTER="2026-08-27"
+ENV REBUILT_AFTER="2026-10-25"
 
 # Install dependencies
 # --------------------
@@ -23,14 +23,14 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 &&  apt-get update \
 &&  apt-get install -y \
       unattended-upgrades \
-      build-essential wget net-tools unzip time poppler-utils optipng strace nginx git python3 python-is-python3 zlib1g-dev libpcre3-dev gettext-base libwww-perl ca-certificates curl gnupg \
+      build-essential wget net-tools unzip time poppler-utils optipng strace nginx git python3 python-is-python3 zlib1g-dev libpcre2-dev gettext-base libwww-perl ca-certificates curl gnupg \
       qpdf \
 # upgrade base-image, batch all the upgrades together, rather than installing them on-by-one (which is slow!)
 &&  unattended-upgrade --verbose --no-minimal-upgrade-steps \
 # install Node.js https://github.com/nodesource/distributions#nodejs
 &&  mkdir -p /etc/apt/keyrings \
 &&  curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
-&&  echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_24.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list \
+&&  echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_26.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list \
 &&  apt-get update \
 &&  apt-get install -y nodejs \
     \
@@ -48,6 +48,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 #     --build-arg TEXLIVE_MIRROR=https://ctan.crest.fr/tex-archive/systems/texlive/tlnet \
 #     -f Dockerfile-base -t sharelatex/sharelatex-base .
 ARG TEXLIVE_MIRROR=https://mirror.ox.ac.uk/sites/ctan.org/systems/texlive/tlnet
+ARG TEXLIVE_SIGNING_SUBKEY_FPR=D8F2F86057A857E42A88106A4CE1877E19438C70
 
 RUN mkdir /install-tl-unx \
 &&  wget --quiet https://tug.org/texlive/files/texlive.asc \
@@ -56,7 +57,10 @@ RUN mkdir /install-tl-unx \
 &&  wget --quiet ${TEXLIVE_MIRROR}/install-tl-unx.tar.gz \
 &&  wget --quiet ${TEXLIVE_MIRROR}/install-tl-unx.tar.gz.sha512 \
 &&  wget --quiet ${TEXLIVE_MIRROR}/install-tl-unx.tar.gz.sha512.asc \
-&&  gpg --verify install-tl-unx.tar.gz.sha512.asc \
+&&  gpg --batch --status-file /tmp/texlive-installer-gpg-status \
+      --verify install-tl-unx.tar.gz.sha512.asc install-tl-unx.tar.gz.sha512 \
+&&  grep -q "VALIDSIG ${TEXLIVE_SIGNING_SUBKEY_FPR}" /tmp/texlive-installer-gpg-status \
+&&  rm /tmp/texlive-installer-gpg-status \
 &&  sha512sum -c install-tl-unx.tar.gz.sha512 \
 &&  tar -xz -C /install-tl-unx --strip-components=1 -f install-tl-unx.tar.gz \
 &&  rm install-tl-unx.tar.gz* \

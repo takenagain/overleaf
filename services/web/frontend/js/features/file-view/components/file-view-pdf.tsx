@@ -60,6 +60,7 @@ const FileViewPdf: FC<{
 
           element.append(canvas)
           page.render({
+            canvas,
             canvasContext: canvas.getContext('2d')!,
             viewport,
           })
@@ -71,7 +72,14 @@ const FileViewPdf: FC<{
     [mountedRef, pathInFolder, fileId, previewByPath, onLoad, onError]
   )
 
-  return <div className="file-view-pdf" ref={handleContainer} />
+  return (
+    <div
+      className="file-view-pdf"
+      ref={element => {
+        void handleContainer(element).catch(onError)
+      }}
+    />
+  )
 }
 
 export default FileViewPdf

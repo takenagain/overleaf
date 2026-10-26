@@ -6,9 +6,8 @@ import Settings from '@overleaf/settings'
 import async from 'async'
 import logger from '@overleaf/logger'
 import express from 'express'
-import session from 'express-session'
 import redis from '@overleaf/redis-wrapper'
-import ConnectRedis from 'connect-redis'
+import { RedisStore } from 'connect-redis'
 import SessionSockets from './app/js/SessionSockets.js'
 import CookieParser from 'cookie-parser'
 import DrainManager from './app/js/DrainManager.js'
@@ -27,8 +26,6 @@ Metrics.event_loop.monitor(logger)
 Metrics.open_sockets.monitor()
 
 const sessionRedisClient = redis.createClient(Settings.redis.websessions)
-
-const RedisStore = ConnectRedis(session)
 
 // NOTE: debug is invoked for every blob that is put on the wire
 const socketIoLogger = {
@@ -56,7 +53,9 @@ const io = socketIO.listen(server, {
 })
 
 // Bind to sessions
-const sessionStore = new RedisStore({ client: sessionRedisClient })
+const sessionStore = new RedisStore({
+  client: redis.createSessionStoreClient(sessionRedisClient),
+})
 
 if (!Settings.security.sessionSecret) {
   throw new Error('No SESSION_SECRET provided.')
