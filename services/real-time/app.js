@@ -15,6 +15,7 @@ import HealthCheckManager from './app/js/HealthCheckManager.js'
 import DeploymentManager from './app/js/DeploymentManager.js'
 import Path from 'node:path'
 import socketIO from 'socket.io'
+import createOriginPattern from './app/js/OriginPattern.js'
 import socketIOClient from 'socket.io-client'
 import http from 'node:http'
 import Router from './app/js/Router.js'
@@ -89,9 +90,7 @@ io.configure(function () {
 
   if (Settings.allowedCorsOrigins) {
     // Create a regex for matching origins, allowing wildcard subdomains
-    const allowedCorsOriginsRegex = new RegExp(
-      `^${Settings.allowedCorsOrigins.replaceAll('.', '\\.').replace('://*', '://[^.]+')}(?::443)?$`
-    )
+    const allowedCorsOriginsRegex = createOriginPattern(Settings.allowedCorsOrigins)
 
     io.set('origins', function (origin, req) {
       if (!origin) {

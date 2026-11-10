@@ -62,3 +62,8 @@ The Redis image variant changes from Debian Trixie to Alpine. The official
 entrypoint still prepares the /data volume and drops privileges to the redis
 user. Rehearse ownership and persistence loading on a copy of the data before
 switching variants; existing volume data was not touched during this update.
+
+Realtime browser origins now default to the origin of OVERLEAF_SITE_URL.
+Deployments that intentionally serve the editor on another origin must explicitly
+set REAL_TIME_ALLOWED_CORS_ORIGINS (the existing wildcard-subdomain format remains
+supported). URL subpaths and IPv6 origins retain their intended meaning.

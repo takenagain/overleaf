@@ -182,6 +182,10 @@ const settings = {
   // when emails are sent out and in generated links:
   siteUrl: (siteUrl = process.env.OVERLEAF_SITE_URL || 'http://localhost'),
 
+  // Restrict browser realtime requests to this instance unless explicitly overridden.
+  allowedCorsOrigins:
+    process.env.REAL_TIME_ALLOWED_CORS_ORIGINS || new URL(siteUrl).origin,
+
   // Status page URL as displayed on the maintenance/500 pages.
   statusPageUrl: process.env.OVERLEAF_STATUS_PAGE_URL
     ? // Add https:// protocol prefix if not set (Allow plain-text http:// for Server Pro/CE).

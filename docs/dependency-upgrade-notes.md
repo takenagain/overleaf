@@ -15,6 +15,8 @@ with glob 14, and update Smithy to remove a credential-redaction defect.
 The obsolete esmock PnP patch was removed because this branch uses node_modules.
 The updated Cypress reporter keeps its Mocha 12 compatibility patch.
 An asynchronous email-form assertion now waits for the button state update.
+CE realtime CORS now defaults to the configured site origin, retaining explicit
+admin overrides and matching IPv6/ports literally.
 
 See the [CVE review](security/cve-review-2026-11-10.md) for current findings,
 component versus official-image fixes, source/bundled scope and test limitations.
