@@ -40,11 +40,11 @@
     "zod-validation-error": "^5.0.0"
   },
   "devDependencies": {
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.6",
     "chai": "^6.3.0",
     "chai-as-promised": "^8.0.2",
     "cookie-signature": "^1.2.2",
-    "eslint": "^10.13.0",
+    "eslint": "^10.14.0",
     "mocha": "^12.0.3",
     "mocha-junit-reporter": "patch:mocha-junit-reporter@npm%3A2.2.1#~/.yarn/patches/mocha-junit-reporter-npm-2.2.1-e02a1e67a3.patch",
     "mocha-multi-reporters": "^1.5.2",
@@ -53,7 +53,7 @@
     "timekeeper": "2.3.1",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "uid-safe": "^2.1.5",
-    "vitest": "5.0.5",
-    "ws": "^8.22.0"
+    "vitest": "5.1.0",
+    "ws": "^8.22.2"
   }
 }

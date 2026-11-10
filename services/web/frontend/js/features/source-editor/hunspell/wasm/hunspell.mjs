@@ -215,8 +215,8 @@ async function getWasmBinary(binaryFile) {
   if (!wasmBinary) {
     // Fetch the binary using readAsync
     try {
-      var response = await readAsync(binaryFile);
-      return new Uint8Array(response);
+      // Await so a rejection is caught and falls back to getBinarySync.
+      return await readAsync(binaryFile);
     } catch {}
   }
   // Otherwise, getBinarySync should be able to get it synchronously
@@ -329,6 +329,8 @@ var stackRestore = val => __emscripten_stack_restore(val);
 
 var stackSave = () => _emscripten_stack_get_current();
 
+/** @type {!Uint8Array} */ var HEAPU8;
+
 var UTF8Decoder = globalThis.TextDecoder && new TextDecoder;
 
 /**
@@ -394,8 +396,6 @@ var UTF8Decoder = globalThis.TextDecoder && new TextDecoder;
   }
   return str;
 };
-
-/** @type {!Uint8Array} */ var HEAPU8;
 
 /**
    * Given a pointer 'ptr' to a null-terminated UTF8-encoded string in the
@@ -475,16 +475,24 @@ var ___cxa_throw = (ptr, type, destructor) => {
   __Unwind_RaiseException(ptr);
 };
 
-/** @type {!Int32Array} */ var HEAP32;
+const FS_MAX_OPEN_FDS = 4096;
 
-var syscallGetVarargI = () => {
-  // the `+` prepended here is necessary to convince the JSCompiler that varargs is indeed a number.
-  var ret = HEAP32[((+SYSCALLS.varargs) >> 2)];
-  SYSCALLS.varargs += 4;
-  return ret;
+var FS_createDataFile = (...args) => FS.createDataFile(...args);
+
+var preloadPlugins = [];
+
+var FS_handledByPreloadPlugin = async (byteArray, fullname) => {
+  // Ensure plugins are ready.
+  if (typeof Browser !== "undefined") Browser.init();
+  for (var plugin of preloadPlugins) {
+    if (plugin["canHandle"](fullname)) {
+      return plugin["handle"](byteArray, fullname);
+    }
+  }
+  // If no plugin handled this file then return the original/unmodified
+  // byteArray.
+  return byteArray;
 };
-
-var syscallGetVarargP = syscallGetVarargI;
 
 var PATH = {
   isAbs: path => path.charAt(0) === "/",
@@ -544,10 +552,6 @@ var PATH = {
   join2: (l, r) => PATH.normalize(l + "/" + r)
 };
 
-var initRandomFill = () => view => (crypto.getRandomValues(view), 0);
-
-var randomFill = view => (randomFill = initRandomFill())(view);
-
 var PATH_FS = {
   resolve: (...args) => {
     var resolvedPath = "", resolvedAbsolute = false;
@@ -601,26 +605,78 @@ var PATH_FS = {
   }
 };
 
-var FS_stdin_getChar_buffer = [];
+var dependenciesPromise = null;
+
+var dependenciesPromiseResolve = null;
+
+var resolveRunDependencies = async () => dependenciesPromise;
+
+var runDependencies = 0;
+
+var removeRunDependency = id => {
+  runDependencies--;
+  Module["monitorRunDependencies"]?.(runDependencies);
+  if (!runDependencies) {
+    dependenciesPromiseResolve();
+  }
+};
+
+var addRunDependency = id => {
+  if (!runDependencies) {
+    dependenciesPromise = new Promise(resolve => dependenciesPromiseResolve = resolve);
+  }
+  runDependencies++;
+  Module["monitorRunDependencies"]?.(runDependencies);
+};
+
+var asyncLoad = async url => {
+  var arrayBuffer = await readAsync(url);
+  return new Uint8Array(arrayBuffer);
+};
+
+var getUniqueRunDependency = id => id;
+
+var FS_preloadFile = async (parent, name, url, canRead = undefined, canWrite = undefined, dontCreateFile = undefined, canOwn = undefined, preFinish = undefined) => {
+  // TODO we should allow people to just pass in a complete filename instead
+  // of parent and name being that we just join them anyways
+  var fullname = name ? PATH_FS.resolve(PATH.join2(parent, name)) : parent;
+  var dep = getUniqueRunDependency(`cp ${fullname}`);
+  // might have several active requests for the same fullname
+  addRunDependency(dep);
+  try {
+    var byteArray = url;
+    if (typeof url === "string") {
+      byteArray = await asyncLoad(url);
+    }
+    byteArray = await FS_handledByPreloadPlugin(byteArray, fullname);
+    preFinish?.();
+    if (!dontCreateFile) {
+      FS_createDataFile(parent, name, byteArray, canRead, canWrite, canOwn);
+    }
+  } finally {
+    removeRunDependency(dep);
+  }
+};
+
+var FS_createPreloadedFile = (parent, name, url, canRead = undefined, canWrite = undefined, onload = undefined, onerror = undefined, dontCreateFile = undefined, canOwn = undefined, preFinish = undefined) => {
+  FS_preloadFile(parent, name, url, canRead, canWrite, dontCreateFile, canOwn, preFinish).then(onload).catch(onerror);
+};
 
 var lengthBytesUTF8 = str => {
   var len = 0;
   for (var i = 0; i < str.length; ++i) {
-    // Gotcha: charCodeAt returns a 16-bit word that is a UTF-16 encoded code
-    // unit, not a Unicode code point of the character! So decode
-    // UTF16->UTF32->UTF8.
-    // See http://unicode.org/faq/utf_bom.html#utf16-3
-    var c = str.charCodeAt(i);
-    // possibly a lead surrogate
-    if (c <= 127) {
+    var u = str.codePointAt(i);
+    if (u <= 127) {
       len++;
-    } else if (c <= 2047) {
+    } else if (u <= 2047) {
       len += 2;
-    } else if (c >= 55296 && c <= 57343) {
-      len += 4;
-      ++i;
-    } else {
+    } else if (u <= 65535) {
       len += 3;
+    } else {
+      len += 4;
+      // Gotcha: if codePoint is over 0xFFFF, it is represented as a surrogate pair in UTF-16.
+      // We need to manually skip over the second code unit for correct iteration.
+      i++;
     }
   }
   return len;
@@ -674,142 +730,38 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
   return u8array;
 };
 
-var FS_stdin_getChar = () => {
-  if (!FS_stdin_getChar_buffer.length) {
-    var result = null;
-    {}
-    if (!result) {
-      return null;
-    }
-    FS_stdin_getChar_buffer = intArrayFromString(result, true);
+var FS_fileDataToTypedArray = data => {
+  if (typeof data === "string") {
+    data = intArrayFromString(data, true);
   }
-  return FS_stdin_getChar_buffer.shift();
+  if (!data.subarray) {
+    data = new Uint8Array(data);
+  }
+  return data;
 };
 
-var TTY = {
-  ttys: [],
-  init() {},
-  shutdown() {},
-  register(dev, ops) {
-    TTY.ttys[dev] = {
-      input: [],
-      output: [],
-      ops
-    };
-    FS.registerDevice(dev, TTY.stream_ops);
-  },
-  stream_ops: {
-    open(stream) {
-      var tty = TTY.ttys[stream.node.rdev];
-      if (!tty) {
-        throw new FS.ErrnoError(43);
-      }
-      stream.tty = tty;
-      stream.seekable = false;
-    },
-    close(stream) {
-      // flush any pending line data
-      stream.tty.ops.fsync(stream.tty);
-    },
-    fsync(stream) {
-      stream.tty.ops.fsync(stream.tty);
-    },
-    read(stream, buffer, offset, length, pos) {
-      if (!stream.tty || !stream.tty.ops.get_char) {
-        throw new FS.ErrnoError(60);
-      }
-      var bytesRead = 0;
-      for (var i = 0; i < length; i++) {
-        var result;
-        try {
-          result = stream.tty.ops.get_char(stream.tty);
-        } catch (e) {
-          throw new FS.ErrnoError(29);
-        }
-        if (result === undefined && !bytesRead) {
-          throw new FS.ErrnoError(6);
-        }
-        if (result === null || result === undefined) break;
-        bytesRead++;
-        buffer[offset + i] = result;
-        // We currently only support canonical mode (ICANON), where
-        // read(2) returns as soon as a line delimiter is read.
-        if (result === 10) break;
-      }
-      if (bytesRead) {
-        stream.node.atime = Date.now();
-      }
-      return bytesRead;
-    },
-    write(stream, buffer, offset, length, pos) {
-      if (!stream.tty || !stream.tty.ops.put_char) {
-        throw new FS.ErrnoError(60);
-      }
-      try {
-        for (var i = 0; i < length; i++) {
-          stream.tty.ops.put_char(stream.tty, buffer[offset + i]);
-        }
-      } catch (e) {
-        throw new FS.ErrnoError(29);
-      }
-      if (length) {
-        stream.node.mtime = stream.node.ctime = Date.now();
-      }
-      return i;
-    }
-  },
-  default_tty_ops: {
-    get_char(tty) {
-      return FS_stdin_getChar();
-    },
-    put_char(tty, val) {
-      if (val === null || val === 10) {
-        out(UTF8ArrayToString(tty.output));
-        tty.output = [];
-      } else {
-        if (val != 0) tty.output.push(val);
-      }
-    },
-    fsync(tty) {
-      if (tty.output?.length > 0) {
-        out(UTF8ArrayToString(tty.output));
-        tty.output = [];
-      }
-    },
-    ioctl_tcgets(tty) {
-      // typical setting
-      return {
-        c_iflag: 25856,
-        c_oflag: 5,
-        c_cflag: 191,
-        c_lflag: 35387,
-        c_cc: [ 3, 28, 127, 21, 4, 0, 1, 0, 17, 19, 26, 0, 18, 15, 23, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
-      };
-    },
-    ioctl_tcsets(tty, optional_actions, data) {
-      // currently just ignore
-      return 0;
-    },
-    ioctl_tiocgwinsz(tty) {
-      return [ 24, 80 ];
-    }
-  },
-  default_tty1_ops: {
-    put_char(tty, val) {
-      if (val === null || val === 10) {
-        err(UTF8ArrayToString(tty.output));
-        tty.output = [];
-      } else {
-        if (val != 0) tty.output.push(val);
-      }
-    },
-    fsync(tty) {
-      if (tty.output?.length > 0) {
-        err(UTF8ArrayToString(tty.output));
-        tty.output = [];
-      }
-    }
+var FS_getMode = (canRead, canWrite) => {
+  var mode = 0;
+  if (canRead) mode |= 292 | 73;
+  if (canWrite) mode |= 146;
+  return mode;
+};
+
+var FS_modeStringToFlags = str => {
+  if (typeof str !== "string") return str;
+  var flagModes = {
+    "r": 0,
+    "r+": 2,
+    "w": 512 | 64 | 1,
+    "w+": 512 | 64 | 2,
+    "a": 1024 | 64 | 1,
+    "a+": 1024 | 64 | 2
+  };
+  var flags = flagModes[str];
+  if (typeof flags === "undefined") {
+    throw new Error(`Unknown file open mode: ${str}`);
   }
+  return flags;
 };
 
 var mmapAlloc = size => {
@@ -1101,7 +1053,7 @@ var MEMFS = {
             if (contents.subarray) {
               contents = contents.subarray(position, position + length);
             } else {
-              contents = Array.prototype.slice.call(contents, position, position + length);
+              contents = contents.slice(position, position + length);
             }
           }
           HEAP8.set(contents, ptr);
@@ -1120,113 +1072,149 @@ var MEMFS = {
   }
 };
 
-var FS_modeStringToFlags = str => {
-  if (typeof str !== "string") return str;
-  var flagModes = {
-    "r": 0,
-    "r+": 2,
-    "w": 512 | 64 | 1,
-    "w+": 512 | 64 | 2,
-    "a": 1024 | 64 | 1,
-    "a+": 1024 | 64 | 2
-  };
-  var flags = flagModes[str];
-  if (typeof flags === "undefined") {
-    throw new Error(`Unknown file open mode: ${str}`);
+var FS_stdin_getChar_buffer = [];
+
+var FS_stdin_getChar = () => {
+  if (!FS_stdin_getChar_buffer.length) {
+    var result = null;
+    {}
+    if (!result) {
+      return null;
+    }
+    FS_stdin_getChar_buffer = intArrayFromString(result, true);
   }
-  return flags;
+  return FS_stdin_getChar_buffer.shift();
 };
 
-var FS_fileDataToTypedArray = data => {
-  if (typeof data === "string") {
-    data = intArrayFromString(data, true);
-  }
-  if (!data.subarray) {
-    data = new Uint8Array(data);
-  }
-  return data;
-};
-
-var FS_getMode = (canRead, canWrite) => {
-  var mode = 0;
-  if (canRead) mode |= 292 | 73;
-  if (canWrite) mode |= 146;
-  return mode;
-};
-
-var asyncLoad = async url => {
-  var arrayBuffer = await readAsync(url);
-  return new Uint8Array(arrayBuffer);
-};
-
-var FS_createDataFile = (...args) => FS.createDataFile(...args);
-
-var getUniqueRunDependency = id => id;
-
-var dependenciesPromise = null;
-
-var resolveRunDependencies = async () => dependenciesPromise;
-
-var runDependencies = 0;
-
-var dependenciesPromiseResolve = null;
-
-var removeRunDependency = id => {
-  runDependencies--;
-  Module["monitorRunDependencies"]?.(runDependencies);
-  if (!runDependencies) {
-    dependenciesPromiseResolve();
-  }
-};
-
-var addRunDependency = id => {
-  if (!runDependencies) {
-    dependenciesPromise = new Promise(resolve => dependenciesPromiseResolve = resolve);
-  }
-  runDependencies++;
-  Module["monitorRunDependencies"]?.(runDependencies);
-};
-
-var preloadPlugins = [];
-
-var FS_handledByPreloadPlugin = async (byteArray, fullname) => {
-  // Ensure plugins are ready.
-  if (typeof Browser !== "undefined") Browser.init();
-  for (var plugin of preloadPlugins) {
-    if (plugin["canHandle"](fullname)) {
-      return plugin["handle"](byteArray, fullname);
+var TTY = {
+  ttys: [],
+  init() {},
+  shutdown() {},
+  register(dev, ops) {
+    TTY.ttys[dev] = {
+      input: [],
+      output: [],
+      ops
+    };
+    FS.registerDevice(dev, TTY.stream_ops);
+  },
+  stream_ops: {
+    open(stream) {
+      var tty = TTY.ttys[stream.node.rdev];
+      if (!tty) {
+        throw new FS.ErrnoError(43);
+      }
+      stream.tty = tty;
+      stream.seekable = false;
+    },
+    close(stream) {
+      // flush any pending line data
+      stream.tty.ops.fsync(stream.tty);
+    },
+    fsync(stream) {
+      stream.tty.ops.fsync(stream.tty);
+    },
+    read(stream, buffer, offset, length, pos) {
+      if (!stream.tty || !stream.tty.ops.get_char) {
+        throw new FS.ErrnoError(60);
+      }
+      var bytesRead = 0;
+      for (var i = 0; i < length; i++) {
+        var result;
+        try {
+          result = stream.tty.ops.get_char(stream.tty);
+        } catch (e) {
+          throw new FS.ErrnoError(29);
+        }
+        if (result === undefined && !bytesRead) {
+          throw new FS.ErrnoError(6);
+        }
+        if (result === null || result === undefined) break;
+        bytesRead++;
+        buffer[offset + i] = result;
+        // We currently only support canonical mode (ICANON), where
+        // read(2) returns as soon as a line delimiter is read.
+        if (result === 10) break;
+      }
+      if (bytesRead) {
+        stream.node.atime = Date.now();
+      }
+      return bytesRead;
+    },
+    write(stream, buffer, offset, length, pos) {
+      if (!stream.tty || !stream.tty.ops.put_char) {
+        throw new FS.ErrnoError(60);
+      }
+      try {
+        for (var i = 0; i < length; i++) {
+          stream.tty.ops.put_char(stream.tty, buffer[offset + i]);
+        }
+      } catch (e) {
+        throw new FS.ErrnoError(29);
+      }
+      if (length) {
+        stream.node.mtime = stream.node.ctime = Date.now();
+      }
+      return i;
+    }
+  },
+  default_tty_ops: {
+    get_char(tty) {
+      return FS_stdin_getChar();
+    },
+    put_char(tty, val) {
+      if (val === null || val === 10) {
+        out(UTF8ArrayToString(tty.output));
+        tty.output = [];
+      } else {
+        if (val != 0) tty.output.push(val);
+      }
+    },
+    fsync(tty) {
+      if (tty.output?.length > 0) {
+        out(UTF8ArrayToString(tty.output));
+        tty.output = [];
+      }
+    },
+    ioctl_tcgets(tty) {
+      // typical setting
+      return {
+        c_iflag: 25856,
+        c_oflag: 5,
+        c_cflag: 191,
+        c_lflag: 35387,
+        c_cc: [ 3, 28, 127, 21, 4, 0, 1, 0, 17, 19, 26, 0, 18, 15, 23, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+      };
+    },
+    ioctl_tcsets(tty, optional_actions, data) {
+      // currently just ignore
+      return 0;
+    },
+    ioctl_tiocgwinsz(tty) {
+      return [ 24, 80 ];
+    }
+  },
+  default_tty1_ops: {
+    put_char(tty, val) {
+      if (val === null || val === 10) {
+        err(UTF8ArrayToString(tty.output));
+        tty.output = [];
+      } else {
+        if (val != 0) tty.output.push(val);
+      }
+    },
+    fsync(tty) {
+      if (tty.output?.length > 0) {
+        err(UTF8ArrayToString(tty.output));
+        tty.output = [];
+      }
     }
   }
-  // If no plugin handled this file then return the original/unmodified
-  // byteArray.
-  return byteArray;
 };
 
-var FS_preloadFile = async (parent, name, url, canRead, canWrite, dontCreateFile, canOwn, preFinish) => {
-  // TODO we should allow people to just pass in a complete filename instead
-  // of parent and name being that we just join them anyways
-  var fullname = name ? PATH_FS.resolve(PATH.join2(parent, name)) : parent;
-  var dep = getUniqueRunDependency(`cp ${fullname}`);
-  // might have several active requests for the same fullname
-  addRunDependency(dep);
-  try {
-    var byteArray = url;
-    if (typeof url === "string") {
-      byteArray = await asyncLoad(url);
-    }
-    byteArray = await FS_handledByPreloadPlugin(byteArray, fullname);
-    preFinish?.();
-    if (!dontCreateFile) {
-      FS_createDataFile(parent, name, byteArray, canRead, canWrite, canOwn);
-    }
-  } finally {
-    removeRunDependency(dep);
-  }
-};
+var initRandomFill = () => view => (crypto.getRandomValues(view), 0);
 
-var FS_createPreloadedFile = (parent, name, url, canRead, canWrite, onload, onerror, dontCreateFile, canOwn, preFinish) => {
-  FS_preloadFile(parent, name, url, canRead, canWrite, dontCreateFile, canOwn, preFinish).then(onload).catch(onerror);
-};
+var randomFill = view => (randomFill = initRandomFill())(view);
 
 var FS = {
   root: null,
@@ -1616,9 +1604,8 @@ var FS = {
     }
     return op;
   },
-  MAX_OPEN_FDS: 4096,
   nextfd() {
-    for (var fd = 0; fd <= FS.MAX_OPEN_FDS; fd++) {
+    for (var fd = 0; fd <= FS_MAX_OPEN_FDS; fd++) {
       if (!FS.streams[fd]) {
         return fd;
       }
@@ -2908,6 +2895,10 @@ var FS = {
   }
 };
 
+/** @type {!Int16Array} */ var HEAP16;
+
+/** @type {!Int32Array} */ var HEAP32;
+
 /** not-@type {!BigInt64Array} */ var HEAP64;
 
 var SYSCALLS = {
@@ -2989,7 +2980,12 @@ var SYSCALLS = {
   }
 };
 
-/** @type {!Int16Array} */ var HEAP16;
+var syscallGetVarargI = () => {
+  // the `+` prepended here is necessary to convince the JSCompiler that varargs is indeed a number.
+  var ret = HEAP32[((+SYSCALLS.varargs) >> 2)];
+  SYSCALLS.varargs += 4;
+  return ret;
+};
 
 function ___syscall_fcntl64(fd, cmd, varargs) {
   SYSCALLS.varargs = varargs;
@@ -3234,19 +3230,19 @@ var __tzset_js = (timezone, daylight, std_name, dst_name) => {
   }
 };
 
-var _emscripten_get_now = () => performance.now();
+const INT53_MAX = 9007199254740992;
 
-var _emscripten_date_now = () => Date.now();
+const INT53_MIN = -9007199254740992;
 
-var nowIsMonotonic = 1;
+var bigintToI53Checked = num => (num < INT53_MIN || num > INT53_MAX) ? NaN : Number(num);
 
 var checkWasiClock = clock_id => clock_id >= 0 && clock_id <= 3;
 
-var INT53_MAX = 9007199254740992;
+const nowIsMonotonic = 1;
 
-var INT53_MIN = -9007199254740992;
+var _emscripten_date_now = () => Date.now();
 
-var bigintToI53Checked = num => (num < INT53_MIN || num > INT53_MAX) ? NaN : Number(num);
+var _emscripten_get_now = () => performance.now();
 
 function _clock_time_get(clk_id, ignored_precision, ptime) {
   ignored_precision = bigintToI53Checked(ignored_precision);
@@ -3268,13 +3264,13 @@ function _clock_time_get(clk_id, ignored_precision, ptime) {
   return 0;
 }
 
+var alignMemory = (size, alignment) => Math.ceil(size / alignment) * alignment;
+
 var getHeapMax = () => // Stay one Wasm page short of 4GB: while e.g. Chrome is able to allocate
 // full 4GB Wasm memories, the size will wrap back to 0 bytes in Wasm side
 // for any code that deals with heap sizes, which would require special
 // casing all heap size related code to treat 0 specially.
 2147483648;
-
-var alignMemory = (size, alignment) => Math.ceil(size / alignment) * alignment;
 
 var growMemory = size => {
   var oldHeapSize = wasmMemory.buffer.byteLength;
@@ -3498,10 +3494,6 @@ var getCFunc = ident => {
   return func;
 };
 
-var writeArrayToMemory = (array, buffer) => {
-  HEAP8.set(array, buffer);
-};
-
 var stackAlloc = sz => __emscripten_stack_alloc(sz);
 
 var stringToUTF8OnStack = str => {
@@ -3509,6 +3501,10 @@ var stringToUTF8OnStack = str => {
   var ret = stackAlloc(size);
   stringToUTF8(str, ret, size);
   return ret;
+};
+
+var writeArrayToMemory = (array, buffer) => {
+  HEAP8.set(array, buffer);
 };
 
 /**
@@ -3623,6 +3619,8 @@ var stringToNewUTF8 = str => {
   if (ret) stringToUTF8(str, ret, size);
   return ret;
 };
+
+var syscallGetVarargP = syscallGetVarargI;
 
 FS.createPreloadedFile = FS_createPreloadedFile;
 

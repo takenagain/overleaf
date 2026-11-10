@@ -30,7 +30,7 @@
     "dockerode": "^5.0.1",
     "express": "5.3.0",
     "lodash": "^4.18.1",
-    "minimatch": "^10.2.6",
+    "minimatch": "^11.0.5",
     "multer": "2.5.0",
     "overleaf-editor-core": "workspace:*",
     "p-limit": "^7.3.3",
@@ -40,10 +40,10 @@
   },
   "devDependencies": {
     "@istanbuljs/esm-loader-hook": "^0.3.0",
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.6",
     "chai": "^6.3.0",
     "chai-as-promised": "^8.0.2",
-    "eslint": "^10.13.0",
+    "eslint": "^10.14.0",
     "form-data": "^4.0.6",
     "mocha": "^12.0.3",
     "mocha-junit-reporter": "patch:mocha-junit-reporter@npm%3A2.2.1#~/.yarn/patches/mocha-junit-reporter-npm-2.2.1-e02a1e67a3.patch",
@@ -54,7 +54,7 @@
     "sinon-chai": "^4.0.1",
     "timekeeper": "2.3.1",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
-    "vitest": "5.0.5",
+    "vitest": "5.1.0",
     "yauzl": "^3.4.0"
   }
 }

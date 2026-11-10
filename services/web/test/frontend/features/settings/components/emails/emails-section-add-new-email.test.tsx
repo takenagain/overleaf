@@ -3,6 +3,7 @@ import {
   screen,
   fireEvent,
   waitForElementToBeRemoved,
+  waitFor,
   within,
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -276,7 +277,7 @@ describe('<EmailsSection />', function () {
       'Invalid Request. Please correct the data and try again.'
     )
     expect(submitBtn).to.not.be.null
-    expect(submitBtn.disabled).to.be.false
+    await waitFor(() => expect(submitBtn.disabled).to.be.false)
   })
 
   it('can link email address to an existing SSO institution', async function () {

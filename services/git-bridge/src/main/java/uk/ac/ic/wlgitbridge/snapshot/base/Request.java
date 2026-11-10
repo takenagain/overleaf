@@ -43,14 +43,13 @@ public abstract class Request<T extends Result> {
         break;
     }
     CompletableFuture<T> ret = new CompletableFuture<>();
-    executor.execute(
-        () -> {
-          try {
-            ret.complete(getResult());
-          } catch (Throwable t) {
-            ret.completeExceptionally(t);
-          }
-        });
+    executor.execute(() -> {
+      try {
+        ret.complete(getResult());
+      } catch (Throwable t) {
+        ret.completeExceptionally(t);
+      }
+    });
     return ret;
   }
 

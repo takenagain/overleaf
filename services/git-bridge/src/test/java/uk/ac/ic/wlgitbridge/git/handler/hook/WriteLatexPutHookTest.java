@@ -97,15 +97,13 @@ public class WriteLatexPutHookTest {
     List<ILoggingEvent> events = listAppender.list;
     boolean hasWarnLog =
         events.stream()
-            .anyMatch(
-                e ->
-                    e.getLevel() == Level.WARN && e.getFormattedMessage().contains("wrong branch"));
+            .anyMatch(e ->
+                e.getLevel() == Level.WARN && e.getFormattedMessage().contains("wrong branch"));
     boolean hasErrorLog =
         events.stream()
-            .anyMatch(
-                e ->
-                    e.getLevel() == Level.ERROR
-                        && e.getFormattedMessage().contains("GitUserException"));
+            .anyMatch(e ->
+                e.getLevel() == Level.ERROR
+                    && e.getFormattedMessage().contains("GitUserException"));
     assertTrue("Expected a WARN log for WrongBranchException", hasWarnLog);
     assertFalse("Expected no ERROR log for WrongBranchException", hasErrorLog);
   }
@@ -130,16 +128,14 @@ public class WriteLatexPutHookTest {
     List<ILoggingEvent> events = listAppender.list;
     boolean hasWarnLog =
         events.stream()
-            .anyMatch(
-                e ->
-                    e.getLevel() == Level.WARN
-                        && e.getFormattedMessage().contains("forced push prohibited"));
+            .anyMatch(e ->
+                e.getLevel() == Level.WARN
+                    && e.getFormattedMessage().contains("forced push prohibited"));
     boolean hasErrorLog =
         events.stream()
-            .anyMatch(
-                e ->
-                    e.getLevel() == Level.ERROR
-                        && e.getFormattedMessage().contains("GitUserException"));
+            .anyMatch(e ->
+                e.getLevel() == Level.ERROR
+                    && e.getFormattedMessage().contains("GitUserException"));
     assertTrue("Expected a WARN log for ForcedPushException", hasWarnLog);
     assertFalse("Expected no ERROR log for ForcedPushException", hasErrorLog);
   }

@@ -46,7 +46,7 @@ services:
 
   redis:
     restart: always
-    image: redis:8.8.3-trixie
+    image: redis:8.10.3-alpine
     container_name: redis
     volumes:
       - ${HOME}/${SHARELATEX_DATA_ROOT_DIR:-sharelatex}/redis_data:/data

@@ -50,13 +50,12 @@ public class GcJobImplTest {
     List<ProjectRepo> mockRepos =
         IntStream.range(0, numProjects)
             .mapToObj(i -> String.valueOf((char) ('a' + i)))
-            .map(
-                proj -> {
-                  gcJob.queueForGc(proj);
-                  ProjectRepo mockRepo = mock(ProjectRepo.class);
-                  o[0] = o[0].thenReturn(mockRepo);
-                  return mockRepo;
-                })
+            .map(proj -> {
+              gcJob.queueForGc(proj);
+              ProjectRepo mockRepo = mock(ProjectRepo.class);
+              o[0] = o[0].thenReturn(mockRepo);
+              return mockRepo;
+            })
             .collect(Collectors.toList());
     CompletableFuture<Void> fut = gcJob.waitForRun();
     gcJob.start();
@@ -73,15 +72,14 @@ public class GcJobImplTest {
   @Test
   public void cannotOverlapGcRuns() throws Exception {
     CompletableFuture<Void> runningForever = new CompletableFuture<>();
-    gcJob.onPostGc(
-        () -> {
-          try {
-            /* Pretend the GC is taking forever */
-            runningForever.join();
-          } catch (Throwable e) {
-            runningForever.completeExceptionally(e);
-          }
-        });
+    gcJob.onPostGc(() -> {
+      try {
+        /* Pretend the GC is taking forever */
+        runningForever.join();
+      } catch (Throwable e) {
+        runningForever.completeExceptionally(e);
+      }
+    });
     CompletableFuture<Void> fut = gcJob.waitForRun();
     gcJob.start();
     fut.join();

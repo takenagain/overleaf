@@ -44,3 +44,9 @@ index 367bdbafbc71b61daf3907913c3861d155140f07..b31ff2d98186ac29446718edfccc03a3
      (req.headers['csrf-token']) ||
      (req.headers['xsrf-token']) ||
      (req.headers['x-csrf-token']) ||
+@@ -245,4 +269,4 @@
+ function setCookie (res, name, val, options) {
+-  var data = Cookie.serialize(name, val, options)
++  var data = Cookie.stringifySetCookie(Object.assign({}, options, { name: name, value: val }), options)
+ 
+   var prev = res.getHeader('set-cookie') || []

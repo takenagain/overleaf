@@ -9,11 +9,11 @@
   },
   "devDependencies": {
     "@eslint/json": "^2.1.1",
-    "@types/node": "^26.6.5",
-    "@typescript-eslint/parser": "^8.72.0",
-    "eslint": "^10.13.0",
+    "@types/node": "^26.6.6",
+    "@typescript-eslint/parser": "^8.72.2",
+    "eslint": "^10.14.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
-    "vitest": "5.0.5"
+    "vitest": "5.1.0"
   },
   "scripts": {
     "test": "yarn run lint && yarn run types:check && yarn run test:unit",

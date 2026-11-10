@@ -76,7 +76,6 @@ public class RepositoryObjectTreeWalker {
         obj.copyTo(o);
         fileContentsTable.put(path, new RepositoryFile(path, o.toByteArray()));
       }
-      ;
     }
     return fileContentsTable;
   }

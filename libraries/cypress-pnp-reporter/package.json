@@ -16,12 +16,12 @@
     "types:check": "node ../../tools/type-check.mjs --noEmit"
   },
   "dependencies": {
-    "cypress-multi-reporters": "patch:cypress-multi-reporters@npm%3A2.0.5#~/.yarn/patches/cypress-multi-reporters-npm-2.0.5-70802a4d20.patch"
+    "cypress-multi-reporters": "patch:cypress-multi-reporters@npm%3A2.1.0#~/.yarn/patches/cypress-multi-reporters-npm-2.1.0.patch"
   },
   "devDependencies": {
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.6",
     "chai": "^6.3.0",
-    "eslint": "^10.13.0",
+    "eslint": "^10.14.0",
     "mocha": "^12.0.3",
     "mocha-junit-reporter": "patch:mocha-junit-reporter@npm%3A2.2.1#~/.yarn/patches/mocha-junit-reporter-npm-2.2.1-e02a1e67a3.patch",
     "mocha-multi-reporters": "^1.5.2",

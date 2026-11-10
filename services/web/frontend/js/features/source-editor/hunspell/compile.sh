@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-COMMIT="e8342700b4dde06130cdbba75f7e6500ffa58864" # Hunspell 1.7.5
+COMMIT="15faca15532b34db3106d50f162e5edc2503d6d6" # Hunspell 1.7.6
 
 curl --fail --location "https://github.com/hunspell/hunspell/archive/${COMMIT}.tar.gz" | tar xvz
 

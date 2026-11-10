@@ -1,3 +1,27 @@
+# Dependency refresh, 10 November 2026
+
+The upstream/main commit is unchanged at e039ad26c5; origin/main matches it and
+staging already contains it. All 28 npm manifests, overrides and recursive
+resolutions were refreshed against current stable registry releases. New major
+updates include glob 14, minimatch 11, i18next 27, react-i18next 18, jsdom 31,
+Stylelint 18, esmock 3, Emscripten 7 and google-java-format 2. Node is now
+26.13.0, bundled npm 12.2.2, Hunspell 1.7.6, Redis 8.10.3 Alpine and the Phusion
+base resolute-1.0.24. Java keeps Java 21 bytecode compatibility; Guava, Jackson
+and Netty are aligned to current secure releases.
+
+Security/compatibility changes retain CSRF validation with cookie 2, prevent
+deepmerge prototype poisoning with a local backport, preserve Babel root paths
+with glob 14, and update Smithy to remove a credential-redaction defect.
+The obsolete esmock PnP patch was removed because this branch uses node_modules.
+The updated Cypress reporter keeps its Mocha 12 compatibility patch.
+An asynchronous email-form assertion now waits for the button state update.
+
+See the [CVE review](security/cve-review-2026-11-10.md) for current findings,
+component versus official-image fixes, source/bundled scope and test limitations.
+The database maintenance steps remain in [runtime-upgrades.md](runtime-upgrades.md).
+
+The earlier baseline report follows for historical context.
+
 # Dependency upgrade, 25 October 2026
 
 The fork's `main` tracks upstream `overleaf/overleaf:main`. Fork configuration

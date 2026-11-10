@@ -1,8 +1,6 @@
-diff --git a/lib/MultiReporters.js b/lib/MultiReporters.js
-index 98dc4efb5e79df3e69b0f0a15f071a1a7d17ecec..530d50689d9e555b6b837e855da53f583fcdf603 100644
 --- a/lib/MultiReporters.js
 +++ b/lib/MultiReporters.js
-@@ -9,7 +9,6 @@ const _ = {
+@@ -9,7 +9,6 @@
  };
  const debug = require('debug')('mocha:reporters:MultiReporters');
  const fs = require('fs');
@@ -10,7 +8,7 @@ index 98dc4efb5e79df3e69b0f0a15f071a1a7d17ecec..530d50689d9e555b6b837e855da53f58
  const mocha = require('mocha');
  const {Base} = mocha.reporters;
  const path = require('path');
-@@ -25,7 +24,8 @@ try {
+@@ -25,7 +24,8 @@
      const {version} = json;
      // istanbul ignore else
      if (semver.gte(version, '6.0.0')) {
@@ -20,7 +18,7 @@ index 98dc4efb5e79df3e69b0f0a15f071a1a7d17ecec..530d50689d9e555b6b837e855da53f58
          mocha6plus = true;
      }
      else {
-@@ -38,12 +38,13 @@ catch (e) {
+@@ -38,12 +38,13 @@
      console.warn('Couldn\'t determine Mocha version');
  }
  
@@ -36,24 +34,14 @@ index 98dc4efb5e79df3e69b0f0a15f071a1a7d17ecec..530d50689d9e555b6b837e855da53f58
  
      if (_.get(options, 'execute', true)) {
          options = this.getOptions(options);
-@@ -107,10 +108,9 @@ function MultiReporters(runner, options) {
+@@ -107,9 +108,8 @@
              this
          );
      }
 +  }
  }
- 
--util.inherits(MultiReporters, Base);
 -
+-util.inherits(MultiReporters, Base);
+ 
  MultiReporters.CONFIG_FILE = '../config.json';
  
- MultiReporters.prototype.done = function (failures, fn) {
-@@ -160,7 +160,7 @@ MultiReporters.prototype.getCustomOptions = function (options) {
-         debug('options file (custom)', customOptionsFile);
- 
-         try {
--            if ('.js' === path.extname(customOptionsFile)) {
-+            if (['.js', '.cjs'].includes(path.extname(customOptionsFile))) {
-                 customOptions = require(customOptionsFile);
-             }
-             else {

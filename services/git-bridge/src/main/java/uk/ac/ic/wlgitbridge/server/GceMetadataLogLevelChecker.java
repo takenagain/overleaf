@@ -33,12 +33,11 @@ public class GceMetadataLogLevelChecker {
     this.metadataUri = URI.create(METADATA_BASE + serviceName + "-setLogLevelEndTime");
     this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     this.scheduler =
-        Executors.newSingleThreadScheduledExecutor(
-            r -> {
-              Thread t = new Thread(r, "log-level-checker");
-              t.setDaemon(true);
-              return t;
-            });
+        Executors.newSingleThreadScheduledExecutor(r -> {
+          Thread t = new Thread(r, "log-level-checker");
+          t.setDaemon(true);
+          return t;
+        });
   }
 
   public void start() {

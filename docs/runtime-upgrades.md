@@ -1,6 +1,6 @@
-# Runtime upgrades (25 October 2026)
+# Runtime upgrades (10 November 2026)
 
-The Compose defaults now use MongoDB 9.0.4 and Redis 8.8.3 on Debian Trixie.
+The Compose defaults now use MongoDB 9.0.4 and Redis 8.10.3 on Alpine Linux.
 The application image is built from this repository with Node.js 26, Ubuntu
 26.04 and TeX Live 2026. Updating these files does not upgrade running services.
 
@@ -54,6 +54,11 @@ separate manual operation.
 
 For Redis, stop writers and preserve a verified copy of the existing persistence
 files before replacing the image. Rehearse loading those files with
-`redis:8.8.3-trixie`, then validate application sessions and background queues.
+`redis:8.10.3-alpine`, then validate application sessions and background queues.
 No Compose deployment, database upgrade or persistent-volume mutation is part
 of the dependency-update build.
+
+The Redis image variant changes from Debian Trixie to Alpine. The official
+entrypoint still prepares the /data volume and drops privileges to the redis
+user. Rehearse ownership and persistence loading on a copy of the data before
+switching variants; existing volume data was not touched during this update.

@@ -38,14 +38,13 @@ public class UrlResourceCacheTest {
 
   private void respondWithContentLength(long cl, long actual) throws ExecutionException {
     when(http.get(any(), any()))
-        .thenAnswer(
-            invoc -> {
-              Object[] args = invoc.getArguments();
-              //noinspection unchecked
-              ((FunctionT<HttpHeaders, Boolean, SizeLimitExceededException>) args[1])
-                  .apply(withContentLength(cl));
-              return new byte[CastUtil.assumeInt(actual)];
-            });
+        .thenAnswer(invoc -> {
+          Object[] args = invoc.getArguments();
+          //noinspection unchecked
+          ((FunctionT<HttpHeaders, Boolean, SizeLimitExceededException>) args[1])
+              .apply(withContentLength(cl));
+          return new byte[CastUtil.assumeInt(actual)];
+        });
   }
 
   private void respondWithContentLength(long cl) throws ExecutionException {
